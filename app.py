@@ -5234,6 +5234,77 @@ def home_page():
                                     st.rerun()
                 else:
                     st.info(t('admin.no_transactions_year'))
+    
+    else:
+        # === المستخدم العادي (غير الأدمن) ===
+        st.markdown("""
+        <style>
+            .user-welcome-card {
+                background: linear-gradient(135deg, #0E1117 0%, #1a1f2e 100%);
+                padding: 25px;
+                border-radius: 15px;
+                margin: 20px 0;
+                border: 2px solid #4facfe;
+            }
+            .user-action-btn {
+                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 12px;
+                text-align: center;
+                margin: 10px;
+                display: inline-block;
+                transition: transform 0.3s ease;
+            }
+            .user-action-btn:hover {
+                transform: scale(1.05);
+            }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # رسالة ترحيبية
+        st.markdown(f"""
+        <div class="user-welcome-card">
+            <h3 style="color: #4facfe; margin: 0;">👋 {t('home.user_welcome_title', 'Welcome to SmartCar AI-Dealer!')}</h3>
+            <p style="color: #a0a0c0; margin-top: 10px;">{t('home.user_welcome_desc', 'Start evaluating your car and get the best price estimate.')}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # أزرار الإجراءات الرئيسية
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button(f"🚗 {t('nav.predict')}", use_container_width=True, type="primary"):
+                navigate_to('predict')
+        
+        with col2:
+            if st.button(f"📄 {t('nav.invoices')}", use_container_width=True):
+                navigate_to('invoices')
+        
+        with col3:
+            if st.button(f"👤 {t('nav.profile')}", use_container_width=True):
+                navigate_to('profile')
+        
+        st.markdown("---")
+        
+        # آخر المعاملات
+        st.subheader(f"📋 {t('home.recent_transactions', 'Recent Transactions')}")
+        
+        db = DatabaseManager()
+        user_transactions = db.get_user_transactions(user['id'], limit=5)
+        
+        if user_transactions:
+            for trans in user_transactions:
+                with st.expander(f"🚗 {trans.get('brand', '')} {trans.get('model', '')} - €{trans.get('estimated_price', 0):,.2f}"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.write(f"**{t('admin.car_type')}:** {trans.get('car_type', '-')}")
+                        st.write(f"**{t('admin.year')}:** {trans.get('manufacture_year', '-')}")
+                    with col2:
+                        st.write(f"**{t('admin.mileage')}:** {trans.get('mileage', 0):,} km")
+                        st.write(f"**{t('admin.condition')}:** {trans.get('condition', '-')}")
+        else:
+            st.info(t('home.no_transactions_yet', 'You have no transactions yet. Start by evaluating your car!'))
 
 
 # ======================
