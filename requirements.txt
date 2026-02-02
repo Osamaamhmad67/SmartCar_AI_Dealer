@@ -1,0 +1,20 @@
+# --- واجهة المستخدم (User Interface) ---
+streamlit>=1.30.0
+
+# --- محرك الذكاء الاصطناعي (AI Engine) ---
+groq>=0.4.0
+
+# --- الأمان وتشفير البيانات (Security & Encryption) ---
+bcrypt>=4.1.0
+python-dotenv>=1.0.0
+
+# --- معالجة الصور (Image Processing) ---
+Pillow>=10.0.0
+numpy>=1.26.0
+
+# --- توليد التقارير والفواتير (PDF Generation) ---
+fpdf2>=2.7.0
+
+# --- أدوات إضافية (Utilities) ---
+requests>=2.31.0
+python-magic>=0.4.27

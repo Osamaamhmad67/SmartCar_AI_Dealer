@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  smartcar-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smartcar_ai_dealer_prod
+    # إعادة التشغيل تلقائياً في حال توقف النظام أو تعثر الخادم
+    restart: unless-stopped
+    
+    # ربط المتغيرات السرية من ملف .env الحقيقي
+    env_file:
+      - .env
+    
+    # توجيه المنافذ (المنفذ 8501 هو الافتراضي لـ Streamlit)
+    ports:
+      - "8501:8501"
+    
+    # ربط المجلدات لضمان بقاء البيانات حتى بعد حذف الحاوية (Data Persistence)
+    volumes:
+      - ./smartcar.db:/app/smartcar.db
+      - ./uploads:/app/uploads
+      - ./invoices:/app/invoices
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./.cache:/app/.cache
+    
+    # تحديد استهلاك الموارد لضمان استقرار الخادم
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+    networks:
+      - smartcar_net
+
+networks:
+  smartcar_net:
+    driver: bridge
+
+# تعريف وحدات التخزين الدائمة
+volumes:
+  uploads_data:
+  invoices_data:
+  db_data:

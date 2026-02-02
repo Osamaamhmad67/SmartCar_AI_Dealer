@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  smartcar-dealer:
+    build: .
+    container_name: smartcar_ai_dev
+    
+    # ربط المتغيرات من ملف .env
+    env_file:
+      - .env
+    
+    # فتح المنفذ الخاص بـ Streamlit للوصول للواجهة
+    ports:
+      - "8501:8501"
+    
+    # ربط المجلدات الحية (Hot Reload)
+    # هذا يسمح لك بتعديل الكود على جهازك ورؤية النتائج فوراً داخل الحاوية
+    volumes:
+      - .:/app
+      - /app/__pycache__
+      - ./smartcar.db:/app/smartcar.db
+      - ./uploads:/app/uploads
+      - ./invoices:/app/invoices
+      - ./logs:/app/logs
+      - ./.cache:/app/.cache
+    
+    # ضمان استمرارية التشغيل
+    restart: always
+    
+    # بيئة التشغيل
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+
+networks:
+  default:
+    name: smartcar_network
