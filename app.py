@@ -5428,11 +5428,41 @@ def predict_page():
                 try:
                     img = Image.open(camera_front)
                     width, height = img.size
-                    left = width * 0.15
-                    top = 0
-                    right = width * 0.85
-                    bottom = height
+                    
+                    # إضافة slider للتكبير (Zoom)
+                    zoom_level = st.slider(
+                        f"🔍 {t('predict.zoom_level', 'Zoom Level')}",
+                        min_value=1.0,
+                        max_value=3.0,
+                        value=1.0,
+                        step=0.1,
+                        key="front_zoom",
+                        help=t('predict.zoom_help', 'Zoom in to capture the brand logo more clearly')
+                    )
+                    
+                    # حساب منطقة القص بناءً على مستوى التكبير
+                    if zoom_level > 1.0:
+                        # حساب حجم المنطقة المقصوصة (كلما زاد الزوم، صغرت المنطقة)
+                        crop_ratio = 1.0 / zoom_level
+                        new_width = width * crop_ratio
+                        new_height = height * crop_ratio
+                        
+                        # حساب إحداثيات القص من المركز
+                        left = (width - new_width) / 2
+                        top = (height - new_height) / 2
+                        right = left + new_width
+                        bottom = top + new_height
+                    else:
+                        # الزوم الافتراضي: قص 15% من الجوانب فقط
+                        left = width * 0.15
+                        top = 0
+                        right = width * 0.85
+                        bottom = height
+                    
                     img_cropped = img.crop((left, top, right, bottom))
+                    
+                    # عرض الصورة المقصوصة للمستخدم
+                    st.image(img_cropped, caption=f"📷 {t('predict.zoomed_preview', 'Zoomed Preview')} ({zoom_level}x)", use_container_width=True)
                     
                     # تحويل الصورة المقصوصة إلى bytes
                     buf = BytesIO()

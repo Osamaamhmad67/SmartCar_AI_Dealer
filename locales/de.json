@@ -87,7 +87,10 @@
         "label_side": "Seite",
         "label_interior": "Innenraum",
         "image_caption": "Bild: {label}",
-        "camera_tip": "Gehen Sie nah an das Fahrzeug heran und stellen Sie sicher, dass das Markenlogo gut sichtbar ist!"
+        "camera_tip": "Gehen Sie nah an das Fahrzeug heran und stellen Sie sicher, dass das Markenlogo gut sichtbar ist!",
+        "zoom_level": "Zoomstufe",
+        "zoom_help": "Zoomen Sie hinein, um das Markenlogo deutlicher zu erfassen",
+        "zoomed_preview": "Vergrößerte Vorschau"
     },
     "results": {
         "title": "Bewertungsergebnis",

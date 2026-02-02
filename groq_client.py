@@ -18,49 +18,49 @@ class CarAIClient(GroqBaseClient):
         
         # البرومبت المطور لضمان دقة التحليل المالي والتقني
         prompt = f"""
-        You are a SENIOR automotive expert with 20+ years of experience identifying cars.
-        Your specialty is distinguishing between similar-looking vehicles from different brands.
+        You are an EXPERT automotive forensic analyst specializing in brand identification.
         
-        CRITICAL IDENTIFICATION RULES:
-        1. CAREFULLY examine the car badge/logo - zoom in mentally on:
-           - Front grille emblem
-           - Rear boot/trunk badge
-           - Steering wheel logo (if interior visible)
-           - Wheel center caps
+        ⚠️ MANDATORY FIRST STEP - LOGO ANALYSIS ⚠️
+        Before identifying the brand, you MUST first describe what you see in the logo/emblem:
+        - What shape is the logo? (circle, oval, wings, letters, animal, etc.)
+        - What symbols or letters are visible?
+        - What color is the emblem?
         
-        2. PAY SPECIAL ATTENTION to distinguishing these similar brands:
-           - Volkswagen vs Skoda vs Seat (all VW Group - different logos!)
-           - Toyota vs Lexus
-           - Nissan vs Infiniti
-           - Honda vs Acura
-           - Hyundai vs Kia vs Genesis
+        🔴 CRITICAL: VW GROUP BRAND DIFFERENTIATION 🔴
+        These brands look similar but have COMPLETELY DIFFERENT LOGOS:
         
-        3. LOOK FOR model-specific features:
-           - Tail light shapes (unique per model)
-           - Grille design patterns
-           - Body proportions and silhouette
-           - Door handle styles
+        | Brand      | Logo Description                                           |
+        |------------|-----------------------------------------------------------|
+        | SKODA      | Green/Silver WINGED ARROW pointing right (like a bird)   |
+        | Volkswagen | VW letters inside a CIRCLE                                |
+        | SEAT       | Silver 'S' letter or stylized SEAT text                   |
+        | Audi       | Four overlapping RINGS                                    |
+        
+        🔴 SKODA FABIA vs VW GOLF - KEY DIFFERENCES 🔴
+        - Skoda Fabia: More angular headlights, SKODA text on rear
+        - Skoda Fabia: Winged arrow emblem on grille and steering wheel
+        - VW Golf: Rounded headlights, VW badge on grille
+        - If you see a WINGED ARROW logo, it is SKODA, NOT VW!
         
         Analyze this car image and provide a detailed report in {user_lang}.
         
         Extract the following information and return it ONLY as a JSON object:
-        1. brand: (MUST be accurate - check logo carefully! e.g., Skoda, not VW if it's a Skoda)
-        2. model: (e.g., Fabia, Golf, Octavia - be specific)
-        3. manufacture_year: (Estimate based on model generation face-lift features)
-        4. car_type: (Choose from: sedan, suv, coupe, hybrid, electric, pickup, hatchback, wagon)
-        5. condition_score: (A float between 0.1 and 1.0, where 1.0 is showroom condition)
-        6. detected_damages: (List of visible issues like scratches, dents, or 'None')
-        7. color: (Visible exterior color)
-        8. summary: (A brief professional assessment of the vehicle)
-        9. brand_confidence: (Float 0.0-1.0 - how certain are you about the brand identification?)
-        10. identification_clues: (What visual evidence led to your brand/model identification?)
+        1. logo_description: (MANDATORY - Describe what you see in the logo/emblem FIRST)
+        2. brand: (Based ONLY on the logo you described above)
+        3. model: (e.g., Fabia, Golf, Octavia - be specific)
+        4. manufacture_year: (Estimate based on model generation)
+        5. car_type: (sedan, suv, coupe, hybrid, electric, pickup, hatchback, wagon)
+        6. condition_score: (Float 0.1-1.0, where 1.0 is showroom condition)
+        7. detected_damages: (List of visible issues or 'None')
+        8. color: (Visible exterior color)
+        9. summary: (Brief professional assessment)
+        10. brand_confidence: (Float 0.0-1.0 - how certain about brand?)
 
-        Rules:
-        - Be VERY careful about brand identification - double-check the logo!
-        - If image quality is poor or logo not visible, set brand_confidence low
-        - Be objective about the condition_score. 
-        - If the image is not a car, return {{"error": "Not a vehicle"}}.
-        - Use exactly the JSON keys provided.
+        🚨 VALIDATION RULES 🚨
+        - If logo_description mentions "wing" or "arrow" → brand MUST be "Skoda"
+        - If logo_description mentions "VW" or "letters in circle" → brand MUST be "Volkswagen"
+        - If you cannot see the logo clearly, set brand_confidence below 0.5
+        - If the image is not a car, return {{"error": "Not a vehicle"}}
         """
 
         try:
@@ -86,12 +86,15 @@ class CarAIClient(GroqBaseClient):
                 ],
                 # تفعيل نمط JSON لضمان استقرار استخراج البيانات
                 response_format={"type": "json_object"},
-                temperature=0.2 # درجة حرارة منخفضة لضمان دقة الحقائق التقنية
+                temperature=0.1 # درجة حرارة منخفضة جداً لضمان دقة أكبر
             )
 
             # معالجة الرد
             raw_content = response.choices[0].message.content
             analysis_result = self._parse_json_response(raw_content)
+            
+            # 🔧 POST-PROCESSING: تصحيح الماركة بناءً على وصف الشعار
+            analysis_result = self._validate_and_correct_brand(analysis_result)
 
             if self.logger:
                 self.logger.info(f"🚗 Analysis Complete: {analysis_result.get('brand')} {analysis_result.get('model')}")
@@ -102,6 +105,39 @@ class CarAIClient(GroqBaseClient):
             if self.logger:
                 self.logger.error(f"❌ AI Analysis Failed: {str(e)}")
             return {"error": "فشل الاتصال بمحرك التحليل", "details": str(e)}
+    
+    def _validate_and_correct_brand(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        تصحيح الماركة تلقائياً بناءً على وصف الشعار
+        """
+        logo_desc = result.get('logo_description', '').lower()
+        current_brand = result.get('brand', '').lower()
+        
+        # إذا وصف الشعار يحتوي على "wing" أو "arrow" → Skoda
+        skoda_keywords = ['wing', 'arrow', 'winged', 'bird', 'flying', 'skoda']
+        vw_keywords = ['vw', 'volkswagen', 'circle', 'letters']
+        
+        for keyword in skoda_keywords:
+            if keyword in logo_desc:
+                if current_brand in ['volkswagen', 'vw']:
+                    result['brand'] = 'Skoda'
+                    result['model'] = result.get('model', '').replace('Golf', 'Fabia').replace('Polo', 'Fabia')
+                    result['brand_corrected'] = True
+                    if self.logger:
+                        self.logger.info(f"🔧 Brand corrected: VW → Skoda (logo: {logo_desc[:50]})")
+                break
+        
+        # إذا وصف الشعار يحتوي على "VW" → Volkswagen
+        for keyword in vw_keywords:
+            if keyword in logo_desc and 'skoda' not in logo_desc:
+                if current_brand == 'skoda':
+                    result['brand'] = 'Volkswagen'
+                    result['brand_corrected'] = True
+                    if self.logger:
+                        self.logger.info(f"🔧 Brand corrected: Skoda → VW (logo: {logo_desc[:50]})")
+                break
+        
+        return result
 
     def quick_validate_image(self, image_bytes: bytes) -> Dict[str, Any]:
         """

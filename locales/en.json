@@ -87,7 +87,10 @@
         "label_side": "Side",
         "label_interior": "Interior",
         "image_caption": "Image: {label}",
-        "camera_tip": "Get close to the car and make sure the brand LOGO is clearly visible for accurate identification!"
+        "camera_tip": "Get close to the car and make sure the brand LOGO is clearly visible for accurate identification!",
+        "zoom_level": "Zoom Level",
+        "zoom_help": "Zoom in to capture the brand logo more clearly",
+        "zoomed_preview": "Zoomed Preview"
     },
     "results": {
         "title": "Evaluation Results",
