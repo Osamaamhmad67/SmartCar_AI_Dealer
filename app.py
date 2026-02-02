@@ -6553,8 +6553,8 @@ def profile_page():
     .profile-table th {{ background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 12px; text-align: {('right' if st.session_state.language == 'ar' else 'left')}; }}
     .profile-table td {{ padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ffffff; text-align: {('right' if st.session_state.language == 'ar' else 'left')}; }}
     .profile-table tr:hover {{ background: rgba(79, 172, 254, 0.1); }}
-    .section-header {{ background: rgba(233, 69, 96, 0.2) !important; }}
-    .section-header td {{ color: #e94560; font-weight: bold; }}
+    .section-header {{ background: rgba(241, 196, 15, 0.15) !important; }}
+    .section-header td {{ color: #f1c40f; font-weight: bold; }}
 </style>
 <table class="profile-table">
     <tr class="section-header"><td colspan="2">🪪 {t('profile.personal_data_header')}</td></tr>
@@ -7377,11 +7377,11 @@ def admin_page():
                     }}
                     .emp-table th {{
                         background: linear-gradient(135deg, #161B22 0%, #0E1117 100%);
-                        color: #e94560;
+                        color: #f1c40f;
                         padding: 12px 15px;
                         text-align: right;
                         font-weight: 600;
-                        border-bottom: 2px solid #e94560;
+                        border-bottom: 2px solid #f1c40f;
                     }}
                     .emp-table td {{
                         padding: 10px 15px;
@@ -7389,7 +7389,7 @@ def admin_page():
                         color: #ffffff;
                     }}
                     .emp-table tr:hover {{
-                        background: rgba(233, 69, 96, 0.1);
+                        background: rgba(241, 196, 15, 0.1);
                     }}
                     .emp-table .label {{
                         color: #a0a0c0;
@@ -7401,12 +7401,12 @@ def admin_page():
                         font-weight: 600;
                     }}
                     .section-title {{
-                        color: #e94560;
+                        color: #f1c40f;
                         font-size: 16px;
                         font-weight: 600;
                         margin: 15px 0 10px 0;
                         padding-bottom: 5px;
-                        border-bottom: 2px solid #e94560;
+                        border-bottom: 2px solid #f1c40f;
                     }}
                 </style>
                 
