@@ -5706,13 +5706,28 @@ def predict_page():
                 has_maintenance = (maintenance_opt == t('admin.maintenance_yes'))
             
             # الصف الرابع (اللون والمقاعد)
-            default_color = analysis.get('color', '')
+            default_color = analysis.get('color', '').lower().strip()
             color_options = [t('admin.color_white'), t('admin.color_black'), t('admin.color_gray'), t('admin.color_silver'), t('admin.color_red'), t('admin.color_blue'), t('admin.color_green'), t('admin.color_brown'), t('admin.color_gold'), t('admin.color_other')]
+            
+            # خريطة الألوان الإنجليزية للفهرس
+            color_mapping = {
+                'white': 0, 'weiß': 0, 'weiss': 0, 'أبيض': 0,
+                'black': 1, 'schwarz': 1, 'أسود': 1,
+                'gray': 2, 'grey': 2, 'grau': 2, 'رمادي': 2,
+                'silver': 3, 'silber': 3, 'فضي': 3,
+                'red': 4, 'rot': 4, 'أحمر': 4,
+                'blue': 5, 'blau': 5, 'أزرق': 5,
+                'green': 6, 'grün': 6, 'gruen': 6, 'أخضر': 6,
+                'brown': 7, 'braun': 7, 'بني': 7,
+                'gold': 8, 'golden': 8, 'ذهبي': 8,
+            }
+            
             color_idx = 0
             if default_color:
-                for i, c in enumerate(color_options):
-                    if c in default_color or default_color in c:
-                        color_idx = i
+                # البحث في الخريطة أولاً
+                for color_key, idx in color_mapping.items():
+                    if color_key in default_color:
+                        color_idx = idx
                         break
             
             with c13:
