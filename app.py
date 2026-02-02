@@ -8271,10 +8271,21 @@ def show_help_dialog():
 ### 💡 {t('help.tips_title')}
     """)
     
-    # عرض النصائح تحت بعضها البعض
-    st.success(f"✅ {t('help.tip1')}")
-    st.success(f"✅ {t('help.tip2')}")
-    st.success(f"✅ {t('help.tip3')}")
+    # عرض النصائح بتنسيق مخصص - نص أبيض واضح
+    tips_html = f"""
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+        <div style="background: linear-gradient(135deg, #1e5631 0%, #2d7a46 100%); padding: 12px 16px; border-radius: 8px; border-right: 4px solid #28a745;">
+            <span style="color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; font-weight: 500;">✅ {t('help.tip1')}</span>
+        </div>
+        <div style="background: linear-gradient(135deg, #1e5631 0%, #2d7a46 100%); padding: 12px 16px; border-radius: 8px; border-right: 4px solid #28a745;">
+            <span style="color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; font-weight: 500;">✅ {t('help.tip2')}</span>
+        </div>
+        <div style="background: linear-gradient(135deg, #1e5631 0%, #2d7a46 100%); padding: 12px 16px; border-radius: 8px; border-right: 4px solid #28a745;">
+            <span style="color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; font-weight: 500;">✅ {t('help.tip3')}</span>
+        </div>
+    </div>
+    """
+    st.markdown(tips_html, unsafe_allow_html=True)
     
     if st.button(t('buttons.close'), use_container_width=True, type="primary"):
         st.rerun()

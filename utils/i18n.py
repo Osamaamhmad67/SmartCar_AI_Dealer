@@ -699,11 +699,19 @@ def apply_language_css():
         .stAlert span,
         [data-testid="stAlert"] p,
         [data-testid="stAlert"] span,
-        .stInfo p, .stWarning p, .stError p, .stSuccess p,
+        .stInfo p, .stWarning p, .stError p,
         [data-testid="stNotification"] p,
         [data-testid="stNotification"] span {
-            color: #333333 !important;
-            -webkit-text-fill-color: #333333 !important;
+            color: #1a1a1a !important;
+            -webkit-text-fill-color: #1a1a1a !important;
+        }
+        
+        /* Success alerts have dark green bg - need white text */
+        .stSuccess p,
+        .stSuccess span,
+        [data-testid="stAlert"][data-baseweb="notification"] p {
+            color: #E0E0E0 !important;
+            -webkit-text-fill-color: #E0E0E0 !important;
         }
         
         /* ═══════════════════════════════════════════════════════════════════════
