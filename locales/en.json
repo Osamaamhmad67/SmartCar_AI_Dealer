@@ -86,7 +86,8 @@
         "label_front": "Front",
         "label_side": "Side",
         "label_interior": "Interior",
-        "image_caption": "Image: {label}"
+        "image_caption": "Image: {label}",
+        "camera_tip": "Get close to the car and make sure the brand LOGO is clearly visible for accurate identification!"
     },
     "results": {
         "title": "Evaluation Results",

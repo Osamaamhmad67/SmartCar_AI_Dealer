@@ -312,19 +312,30 @@ def apply_language_css():
            لا نغير الألوان بشكل عام، فقط المناطق المشكلة
            ═══════════════════════════════════════════════════════════════════════ */
         
-        /* File uploader dropzone - ensure dark text on white background */
+        /* File uploader dropzone - white text on dark background */
+        .stApp [data-testid="stFileUploaderDropzone"] span,
+        .stApp [data-testid="stFileUploaderDropzone"] small,
+        .stApp [data-testid="stFileUploaderDropzone"] p,
         [data-testid="stFileUploaderDropzone"] span,
         [data-testid="stFileUploaderDropzone"] small,
         [data-testid="stFileUploaderDropzone"] p {
-            color: #333333 !important;
-            -webkit-text-fill-color: #333333 !important;
+            color: #E0E0E0 !important;
+            -webkit-text-fill-color: #E0E0E0 !important;
+        }
+        
+        /* Uploader labels above dropzone */
+        .stApp .stFileUploader label,
+        .stFileUploader label,
+        [data-testid="stFileUploader"] label {
+            color: #E0E0E0 !important;
+            -webkit-text-fill-color: #E0E0E0 !important;
         }
         
         /* Camera input tabs - ensure readable text */
         .stCameraInput button[role="tab"],
         [data-testid="stCameraInput"] button[role="tab"] {
-            color: #333333 !important;
-            -webkit-text-fill-color: #333333 !important;
+            color: #E0E0E0 !important;
+            -webkit-text-fill-color: #E0E0E0 !important;
         }
         
         /* Browse files button - gold styling */
@@ -694,22 +705,17 @@ def apply_language_css():
             text-align: right !important; 
         }
         
-        /* Alert text colors - ensure visibility on light backgrounds */
+        /* Alert text colors - white text for dark theme backgrounds */
         .stAlert p,
         .stAlert span,
         [data-testid="stAlert"] p,
         [data-testid="stAlert"] span,
-        .stInfo p, .stWarning p, .stError p,
+        .stInfo p, .stInfo span,
+        .stWarning p, .stWarning span,
+        .stError p, .stError span,
+        .stSuccess p, .stSuccess span,
         [data-testid="stNotification"] p,
         [data-testid="stNotification"] span {
-            color: #1a1a1a !important;
-            -webkit-text-fill-color: #1a1a1a !important;
-        }
-        
-        /* Success alerts have dark green bg - need white text */
-        .stSuccess p,
-        .stSuccess span,
-        [data-testid="stAlert"][data-baseweb="notification"] p {
             color: #E0E0E0 !important;
             -webkit-text-fill-color: #E0E0E0 !important;
         }
@@ -1049,21 +1055,43 @@ def apply_language_css():
             -webkit-text-fill-color: inherit !important;
         }
         
-        /* Streamlit Alerts - dark text on light background */
+        /* Streamlit Info/Warning Alerts - light text on dark background (dark theme) */
         [data-testid="stAlert"] p,
         [data-testid="stAlert"] span,
         .stAlert p,
-        .stAlert span {
-            color: #0E1117 !important;
-            -webkit-text-fill-color: #0E1117 !important;
+        .stAlert span,
+        .stInfo p,
+        .stInfo span,
+        .stWarning p,
+        .stWarning span {
+            color: #E0E0E0 !important;
+            -webkit-text-fill-color: #E0E0E0 !important;
         }
         
-        /* File uploader dropzone */
+        /* Error alerts may have lighter background - use darker text */
+        .stError p,
+        .stError span {
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+        }
+        
+        /* File uploader dropzone - white text on dark background */
+        .stApp [data-testid="stFileUploaderDropzone"] span,
+        .stApp [data-testid="stFileUploaderDropzone"] small,
+        .stApp [data-testid="stFileUploaderDropzone"] p,
         [data-testid="stFileUploaderDropzone"] span,
         [data-testid="stFileUploaderDropzone"] small,
         [data-testid="stFileUploaderDropzone"] p {
-            color: #333333 !important;
-            -webkit-text-fill-color: #333333 !important;
+            color: #E0E0E0 !important;
+            -webkit-text-fill-color: #E0E0E0 !important;
+        }
+        
+        /* Uploader labels above dropzone */
+        .stApp .stFileUploader label,
+        .stFileUploader label,
+        [data-testid="stFileUploader"] label {
+            color: #E0E0E0 !important;
+            -webkit-text-fill-color: #E0E0E0 !important;
         }
         
         /* Browse files button - gold styling */

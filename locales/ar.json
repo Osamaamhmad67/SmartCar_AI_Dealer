@@ -86,7 +86,8 @@
         "label_front": "أمامية",
         "label_side": "جانبية",
         "label_interior": "داخلية",
-        "image_caption": "صورة {label}"
+        "image_caption": "صورة {label}",
+        "camera_tip": "اقترب من السيارة وتأكد من ظهور شعار الماركة بوضوح للحصول على تحليل دقيق!"
     },
     "results": {
         "title": "نتيجة التقييم",

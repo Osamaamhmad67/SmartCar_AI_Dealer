@@ -5413,6 +5413,9 @@ def predict_page():
             images_to_analyze['interior'] = interior_img.getvalue()
 
     with image_tab2:
+        # تلميح مهم للمستخدم
+        st.warning(f"📸 {t('predict.camera_tip', 'Get close to the car and make sure the brand LOGO is clearly visible for accurate identification!')}")
+        
         # الكاميرا (دائماً الصورة الأمامية متاحة)
         st.markdown(f"##### 1. {t('predict.front_image')}")
         

@@ -18,20 +18,46 @@ class CarAIClient(GroqBaseClient):
         
         # البرومبت المطور لضمان دقة التحليل المالي والتقني
         prompt = f"""
-        You are a professional automotive expert and appraiser. 
+        You are a SENIOR automotive expert with 20+ years of experience identifying cars.
+        Your specialty is distinguishing between similar-looking vehicles from different brands.
+        
+        CRITICAL IDENTIFICATION RULES:
+        1. CAREFULLY examine the car badge/logo - zoom in mentally on:
+           - Front grille emblem
+           - Rear boot/trunk badge
+           - Steering wheel logo (if interior visible)
+           - Wheel center caps
+        
+        2. PAY SPECIAL ATTENTION to distinguishing these similar brands:
+           - Volkswagen vs Skoda vs Seat (all VW Group - different logos!)
+           - Toyota vs Lexus
+           - Nissan vs Infiniti
+           - Honda vs Acura
+           - Hyundai vs Kia vs Genesis
+        
+        3. LOOK FOR model-specific features:
+           - Tail light shapes (unique per model)
+           - Grille design patterns
+           - Body proportions and silhouette
+           - Door handle styles
+        
         Analyze this car image and provide a detailed report in {user_lang}.
         
         Extract the following information and return it ONLY as a JSON object:
-        1. brand: (e.g., BMW, Toyota)
-        2. model: (e.g., X5, Camry)
-        3. manufacture_year: (Estimate if not sure)
-        4. car_type: (Choose from: sedan, suv, coupe, hybrid, electric, pickup)
+        1. brand: (MUST be accurate - check logo carefully! e.g., Skoda, not VW if it's a Skoda)
+        2. model: (e.g., Fabia, Golf, Octavia - be specific)
+        3. manufacture_year: (Estimate based on model generation face-lift features)
+        4. car_type: (Choose from: sedan, suv, coupe, hybrid, electric, pickup, hatchback, wagon)
         5. condition_score: (A float between 0.1 and 1.0, where 1.0 is showroom condition)
         6. detected_damages: (List of visible issues like scratches, dents, or 'None')
         7. color: (Visible exterior color)
         8. summary: (A brief professional assessment of the vehicle)
+        9. brand_confidence: (Float 0.0-1.0 - how certain are you about the brand identification?)
+        10. identification_clues: (What visual evidence led to your brand/model identification?)
 
         Rules:
+        - Be VERY careful about brand identification - double-check the logo!
+        - If image quality is poor or logo not visible, set brand_confidence low
         - Be objective about the condition_score. 
         - If the image is not a car, return {{"error": "Not a vehicle"}}.
         - Use exactly the JSON keys provided.

@@ -86,7 +86,8 @@
         "label_front": "Front",
         "label_side": "Seite",
         "label_interior": "Innenraum",
-        "image_caption": "Bild: {label}"
+        "image_caption": "Bild: {label}",
+        "camera_tip": "Gehen Sie nah an das Fahrzeug heran und stellen Sie sicher, dass das Markenlogo gut sichtbar ist!"
     },
     "results": {
         "title": "Bewertungsergebnis",
