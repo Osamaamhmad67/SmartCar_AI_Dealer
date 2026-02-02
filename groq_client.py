@@ -97,13 +97,13 @@ class CarAIClient(GroqBaseClient):
             analysis_result = self._validate_and_correct_brand(analysis_result)
 
             if self.logger:
-                self.logger.info(f"🚗 Analysis Complete: {analysis_result.get('brand')} {analysis_result.get('model')}")
+                self.logger.info(f"[CAR] Analysis Complete: {analysis_result.get('brand')} {analysis_result.get('model')}")
 
             return analysis_result
 
         except Exception as e:
             if self.logger:
-                self.logger.error(f"❌ AI Analysis Failed: {str(e)}")
+                self.logger.error(f"[ERROR] AI Analysis Failed: {str(e)}")
             return {"error": "فشل الاتصال بمحرك التحليل", "details": str(e)}
     
     def _validate_and_correct_brand(self, result: Dict[str, Any]) -> Dict[str, Any]:
@@ -124,7 +124,7 @@ class CarAIClient(GroqBaseClient):
                     result['model'] = result.get('model', '').replace('Golf', 'Fabia').replace('Polo', 'Fabia')
                     result['brand_corrected'] = True
                     if self.logger:
-                        self.logger.info(f"🔧 Brand corrected: VW → Skoda (logo: {logo_desc[:50]})")
+                        self.logger.info(f"[FIX] Brand corrected: VW -> Skoda (logo: {logo_desc[:50]})")
                 break
         
         # إذا وصف الشعار يحتوي على "VW" → Volkswagen
@@ -134,7 +134,7 @@ class CarAIClient(GroqBaseClient):
                     result['brand'] = 'Volkswagen'
                     result['brand_corrected'] = True
                     if self.logger:
-                        self.logger.info(f"🔧 Brand corrected: Skoda → VW (logo: {logo_desc[:50]})")
+                        self.logger.info(f"[FIX] Brand corrected: Skoda -> VW (logo: {logo_desc[:50]})")
                 break
         
         return result

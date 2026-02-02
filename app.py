@@ -3762,7 +3762,7 @@ def init_system():
     Config.validate_config()
     
     if Config.logger:
-        Config.logger.info("✅ تم تهيئة النظام")
+        Config.logger.info("[OK] System initialized successfully")
 
 
 def init_session_state():
