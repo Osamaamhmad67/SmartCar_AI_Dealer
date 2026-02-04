@@ -147,7 +147,7 @@ SmartCar_AI_Dealer/
 **Osama Ahmad**
 
 - GitHub: [@Osamaamhmad67](https://github.com/Osamaamhmad67)
-- LinkedIn: [Osama Ahmad](https://linkedin.com/in/osama-ahmad-67)
+- LinkedIn: [Osama Ahmad](https://www.linkedin.com/in/osama-ahmad-758447371/)
 
 ---
 
