@@ -62,7 +62,7 @@
 
 ### 1. استنساخ المشروع
 ```bash
-git clone https://github.com/YOUR_USERNAME/SmartCar_AI_Dealer.git
+git clone https://github.com/Osamaamhmad67/SmartCar_AI_Dealer.git
 cd SmartCar_AI_Dealer
 ```
 
@@ -144,10 +144,10 @@ SmartCar_AI_Dealer/
 
 ## 👤 المطور
 
-**Osama**
+**Osama Ahmad**
 
-- GitHub: [@YOUR_USERNAME](https://github.com/YOUR_USERNAME)
-- LinkedIn: [Your Profile](https://linkedin.com/in/YOUR_PROFILE)
+- GitHub: [@Osamaamhmad67](https://github.com/Osamaamhmad67)
+- LinkedIn: [Osama Ahmad](https://linkedin.com/in/osama-ahmad-67)
 
 ---
 
