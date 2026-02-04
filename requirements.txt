@@ -18,3 +18,8 @@ fpdf2>=2.7.0
 # --- أدوات إضافية (Utilities) ---
 requests>=2.31.0
 python-magic>=0.4.27
+qrcode>=7.4.0
+
+# --- مسح QR Code (QR Scanning) ---
+opencv-python>=4.8.0
+pyzbar>=0.1.9

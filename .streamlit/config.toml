@@ -57,9 +57,14 @@ textColor = "#E0E0E0"
 primaryColor = "#D4AF37"
 
 # ═══════════════════════════════════════════════════════════════════════════
-# SERVER CONFIGURATION
+# SERVER CONFIGURATION - Network Access Enabled
 # ═══════════════════════════════════════════════════════════════════════════
 [server]
+# Allow access from any device on the network
+address = "0.0.0.0"
+port = 8501
+# Disable XSRF for network access (required for mobile devices)
 enableCORS = false
-enableXsrfProtection = true
+enableXsrfProtection = false
 maxUploadSize = 200
+headless = true

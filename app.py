@@ -4110,7 +4110,7 @@ def home_page():
         with menu_col:
             admin_menu = st.selectbox(
                 f"📂 {t('admin.select_section')}",
-                [t('admin.statistics'), t('admin.users'), t('admin.employees'), t('admin.payroll'), t('admin.transactions'), t('admin.financial_settings'), t('admin.profit_reports')],
+                [t('admin.statistics'), t('admin.users'), t('admin.employees'), t('admin.payroll'), t('admin.transactions'), t('admin.financial_settings'), t('admin.profit_reports'), t('admin.attendance')],
                 label_visibility="collapsed"
             )
         
@@ -4476,6 +4476,362 @@ def home_page():
                         t('admin.total_profit'): f"€{m['profit']:,.2f}"
                     })
                 st.dataframe(pd.DataFrame(table_data), use_container_width=True)
+
+        # ===== قسم إدارة الحضور (Attendance Management) =====
+        elif admin_menu == t('admin.attendance'):
+            import pandas as pd
+            st.subheader(f"⏰ {t('admin.attendance')}")
+            
+            # التبويبات
+            att_tab1, att_tab2, att_tab3, att_tab4 = st.tabs([
+                f"📲 {t('admin.check_in')}/{t('admin.check_out')}",
+                f"📷 {t('admin.qr_scan')}",
+                f"📋 {t('admin.attendance_log')}",
+                f"📊 {t('admin.monthly_report')}"
+            ])
+            
+            # === تبويب تسجيل الحضور ===
+            with att_tab1:
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #0E1117 0%, #1a1a2e 100%); 
+                            padding: 20px; border-radius: 15px; border: 2px solid #D4AF37; margin-bottom: 20px;">
+                    <h4 style="color: #D4AF37; margin: 0;">📲 {t('admin.check_in')} / {t('admin.check_out')}</h4>
+                    <p style="color: #a0a0c0; margin: 5px 0 0 0;">{t('buttons.select')} {t('admin.employees')}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # اختيار الموظف
+                employees = db.get_all_employees()
+                active_employees = [e for e in employees if e.get('is_active')]
+                
+                if active_employees:
+                    emp_options = {f"{e['first_name']} {e.get('last_name', '')} (ID: {e['id']})": e for e in active_employees}
+                    selected_emp_name = st.selectbox(f"👤 {t('buttons.select')} {t('admin.employees')}", list(emp_options.keys()))
+                    selected_emp = emp_options[selected_emp_name]
+                    
+                    # عرض حالة الموظف اليوم
+                    today_record = db.get_attendance_today(selected_emp['id'])
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        if today_record:
+                            status_color = "#27ae60" if today_record.get('status') == 'complete' else "#f39c12"
+                            status_text = t('admin.complete') if today_record.get('status') == 'complete' else t('admin.incomplete')
+                            st.markdown(f"""
+                            <div style="background: #1a1a2e; padding: 15px; border-radius: 10px; border-left: 4px solid {status_color};">
+                                <h5 style="color: {status_color}; margin: 0;">{t('admin.attendance_status')}</h5>
+                                <p style="color: white;">🕒 {t('admin.check_in')}: {today_record.get('check_in', 'N/A')[:16] if today_record.get('check_in') else '-'}</p>
+                                <p style="color: white;">🕕 {t('admin.check_out')}: {today_record.get('check_out', 'N/A')[:16] if today_record.get('check_out') else '-'}</p>
+                                <p style="color: #D4AF37;">⏱️ {t('admin.worked_hours')}: {today_record.get('net_worked_hours', 0):.2f}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.info(t('admin.no_check_in_found'))
+                    
+                    with col2:
+                        # أزرار الحضور/الانصراف
+                        st.markdown(f"### {t('buttons.actions')}")
+                        
+                        btn_col1, btn_col2 = st.columns(2)
+                        
+                        with btn_col1:
+                            if st.button(f"✅ {t('admin.check_in')}", type="primary", use_container_width=True):
+                                result = db.record_check_in(selected_emp['id'])
+                                if result['success']:
+                                    st.success(f"✅ {t('admin.check_in_recorded')} - {result['time']}")
+                                    st.rerun()
+                                else:
+                                    st.warning(f"⚠️ {t('admin.already_checked_in')}")
+                        
+                        with btn_col2:
+                            if st.button(f"🚪 {t('admin.check_out')}", type="secondary", use_container_width=True):
+                                result = db.record_check_out(selected_emp['id'])
+                                if result['success']:
+                                    adj = result.get('adjustment', {})
+                                    msg = f"✅ {t('admin.check_out_recorded')}\n"
+                                    msg += f"⏱️ {t('admin.worked_hours')}: {result['net_worked_hours']:.2f}\n"
+                                    if adj.get('type') == 'overtime':
+                                        msg += f"💰 {t('admin.overtime')}: +{adj['hours']:.1f}h (+€{adj['amount']:.2f})"
+                                    elif adj.get('type') == 'deduction':
+                                        msg += f"⚠️ {t('admin.deduction')}: -{adj['hours']:.1f}h (-€{adj['amount']:.2f})"
+                                    st.success(msg)
+                                    st.rerun()
+                                else:
+                                    st.error(f"❌ {t('admin.no_check_in_found')}")
+                        
+                        # زر توليد QR
+                        if st.button(f"🔲 {t('admin.generate_qr')}", use_container_width=True):
+                            qr_token = selected_emp.get('qr_token')
+                            if not qr_token:
+                                qr_token = db.generate_employee_qr_token(selected_emp['id'])
+                            
+                            # إنشاء صورة QR Code
+                            import qrcode
+                            from io import BytesIO
+                            
+                            qr = qrcode.QRCode(version=1, box_size=10, border=4)
+                            qr.add_data(qr_token)
+                            qr.make(fit=True)
+                            qr_img = qr.make_image(fill_color="black", back_color="white")
+                            
+                            # تحويل لصيغة يمكن عرضها
+                            buffer = BytesIO()
+                            qr_img.save(buffer, format="PNG")
+                            buffer.seek(0)
+                            
+                            # عرض الصورة
+                            st.image(buffer, caption=f"{t('admin.qr_code')}: {qr_token}", width=250)
+                            st.code(qr_token, language=None)
+                else:
+                    st.warning(t('admin.no_data'))
+            
+            # === تبويب سجل الحضور ===
+            with att_tab2:
+                st.markdown(f"### 📋 {t('admin.attendance_log')}")
+                
+                # فلاتر
+                filter_col1, filter_col2, filter_col3 = st.columns(3)
+                
+                with filter_col1:
+                    if active_employees:
+                        all_text = t('buttons.all') if t('buttons.all') else "All"
+                        emp_filter_options = [all_text] + [f"{e['first_name']} {e.get('last_name', '')}" for e in active_employees]
+                        selected_emp_filter = st.selectbox(t('admin.employees'), emp_filter_options)
+                
+                with filter_col2:
+                    from datetime import datetime
+                    current_year = datetime.now().year
+                    selected_year = st.selectbox(t('admin.select_year'), range(current_year, current_year-3, -1))
+                
+                with filter_col3:
+                    month_names = [t(f'months.{i}') if t(f'months.{i}') else str(i) for i in range(1, 13)]
+                    current_month = datetime.now().month
+                    selected_month = st.selectbox(t('admin.select_month') if t('admin.select_month') else "Month", range(1, 13), index=current_month-1, 
+                                                 format_func=lambda x: month_names[x-1])
+                
+                # جلب البيانات
+                all_records = []
+                if active_employees:
+                    if selected_emp_filter == all_text:
+                        for emp in active_employees:
+                            records = db.get_monthly_attendance(emp['id'], selected_year, selected_month)
+                            for r in records:
+                                r['employee_name'] = f"{emp['first_name']} {emp.get('last_name', '')}"
+                            all_records.extend(records)
+                    else:
+                        emp_idx = emp_filter_options.index(selected_emp_filter) - 1
+                        emp = active_employees[emp_idx]
+                        all_records = db.get_monthly_attendance(emp['id'], selected_year, selected_month)
+                        for r in all_records:
+                            r['employee_name'] = f"{emp['first_name']} {emp.get('last_name', '')}"
+                
+                if all_records:
+                    # تحويل للجدول
+                    table_data = []
+                    for r in all_records:
+                        status_emoji = "✅" if r.get('status') == 'complete' else "⚠️"
+                        table_data.append({
+                            t('admin.employees'): r.get('employee_name', 'N/A'),
+                            t('fields.date'): r.get('date', 'N/A'),
+                            t('admin.check_in'): r.get('check_in', 'N/A')[:16] if r.get('check_in') else '-',
+                            t('admin.check_out'): r.get('check_out', 'N/A')[:16] if r.get('check_out') else '-',
+                            t('admin.worked_hours'): f"{r.get('net_worked_hours', 0):.2f}",
+                            t('admin.attendance_status'): f"{status_emoji} {t('admin.complete') if r.get('status') == 'complete' else t('admin.incomplete')}"
+                        })
+                    st.dataframe(pd.DataFrame(table_data), use_container_width=True)
+                else:
+                    st.info(t('admin.no_data'))
+            
+            # === تبويب التقارير الشهرية ===
+            with att_tab3:
+                st.markdown(f"### 📊 {t('admin.monthly_report')}")
+                
+                report_col1, report_col2 = st.columns(2)
+                
+                with report_col1:
+                    from datetime import datetime
+                    current_year = datetime.now().year
+                    report_year = st.selectbox(t('admin.select_year'), range(current_year, current_year-3, -1), key="report_year")
+                
+                with report_col2:
+                    month_names = [t(f'months.{i}') if t(f'months.{i}') else str(i) for i in range(1, 13)]
+                    current_month = datetime.now().month
+                    report_month = st.selectbox(t('admin.select_month') if t('admin.select_month') else "Month", range(1, 13), index=current_month-1,
+                                               format_func=lambda x: month_names[x-1], key="report_month")
+                
+                if active_employees:
+                    # ملخص لكل موظف
+                    summary_data = []
+                    for emp in active_employees:
+                        adjustments = db.get_monthly_adjustments(emp['id'], report_year, report_month)
+                        attendance = db.get_monthly_attendance(emp['id'], report_year, report_month)
+                        total_days = len(attendance)
+                        complete_days = len([a for a in attendance if a.get('status') == 'complete'])
+                        
+                        summary_data.append({
+                            t('admin.employees'): f"{emp['first_name']} {emp.get('last_name', '')}",
+                            t('fields.working_days') if t('fields.working_days') else "Work Days": total_days,
+                            t('admin.complete'): complete_days,
+                            t('admin.overtime'): f"{adjustments['overtime_hours']:.1f}h",
+                            f"{t('admin.overtime')} €": f"€{adjustments['overtime_amount']:.2f}",
+                            t('admin.deduction'): f"{adjustments['deduction_hours']:.1f}h",
+                            f"{t('admin.deduction')} €": f"€{adjustments['deduction_amount']:.2f}",
+                            "Net €": f"€{adjustments['net_adjustment']:.2f}"
+                        })
+                    
+                    st.dataframe(pd.DataFrame(summary_data), use_container_width=True)
+                    
+                    # ملخص إجمالي
+                    total_overtime = sum(db.get_monthly_adjustments(e['id'], report_year, report_month)['overtime_amount'] for e in active_employees)
+                    total_deductions = sum(db.get_monthly_adjustments(e['id'], report_year, report_month)['deduction_amount'] for e in active_employees)
+                    
+                    summary_col1, summary_col2, summary_col3 = st.columns(3)
+                    with summary_col1:
+                        st.metric(f"💰 {t('admin.overtime')}", f"€{total_overtime:.2f}")
+                    with summary_col2:
+                        st.metric(f"📉 {t('admin.deduction')}", f"€{total_deductions:.2f}")
+                    with summary_col3:
+                        st.metric(f"📊 Net", f"€{total_overtime - total_deductions:.2f}")
+            
+            # === تبويب مسح QR Code ===
+            with att_tab4:
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #0E1117 0%, #1a1a2e 100%); 
+                            padding: 20px; border-radius: 15px; border: 2px solid #27ae60; margin-bottom: 20px;">
+                    <h4 style="color: #27ae60; margin: 0;">📷 {t('admin.qr_scan')}</h4>
+                    <p style="color: #a0a0c0; margin: 5px 0 0 0;">{t('admin.qr_scan_desc') if t('admin.qr_scan_desc') else 'Scan employee QR code for quick check-in/out'}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # اختيار طريقة الإدخال
+                input_method = st.radio(
+                    t('admin.select_method') if t('admin.select_method') else "Select Method",
+                    [f"📷 {t('admin.camera') if t('admin.camera') else 'Camera'}", 
+                     f"📁 {t('admin.upload_image') if t('admin.upload_image') else 'Upload Image'}",
+                     f"⌨️ {t('admin.manual_code') if t('admin.manual_code') else 'Manual Code'}"],
+                    horizontal=True
+                )
+                
+                qr_code_value = None
+                
+                if "Camera" in input_method or "الكاميرا" in input_method:
+                    # استخدام كاميرا المتصفح
+                    captured_image = st.camera_input(t('admin.capture_qr') if t('admin.capture_qr') else "Capture QR Code")
+                    
+                    if captured_image:
+                        try:
+                            from PIL import Image
+                            import cv2
+                            import numpy as np
+                            from pyzbar.pyzbar import decode
+                            
+                            # تحويل الصورة
+                            img = Image.open(captured_image)
+                            img_array = np.array(img)
+                            
+                            # البحث عن QR في الصورة
+                            decoded_objects = decode(img_array)
+                            
+                            if decoded_objects:
+                                qr_code_value = decoded_objects[0].data.decode('utf-8')
+                                st.success(f"✅ {t('admin.qr_detected') if t('admin.qr_detected') else 'QR Detected'}: {qr_code_value}")
+                            else:
+                                st.warning(t('admin.no_qr_found') if t('admin.no_qr_found') else "⚠️ No QR code found in image")
+                        except ImportError:
+                            st.error("❌ Please install: pip install opencv-python pyzbar")
+                        except Exception as e:
+                            st.error(f"❌ Error: {str(e)}")
+                
+                elif "Upload" in input_method or "رفع" in input_method:
+                    # رفع صورة QR
+                    uploaded_file = st.file_uploader(
+                        t('admin.upload_qr_image') if t('admin.upload_qr_image') else "Upload QR Code Image",
+                        type=['png', 'jpg', 'jpeg']
+                    )
+                    
+                    if uploaded_file:
+                        try:
+                            from PIL import Image
+                            import cv2
+                            import numpy as np
+                            from pyzbar.pyzbar import decode
+                            
+                            img = Image.open(uploaded_file)
+                            img_array = np.array(img)
+                            
+                            decoded_objects = decode(img_array)
+                            
+                            if decoded_objects:
+                                qr_code_value = decoded_objects[0].data.decode('utf-8')
+                                st.success(f"✅ {t('admin.qr_detected') if t('admin.qr_detected') else 'QR Detected'}: {qr_code_value}")
+                            else:
+                                st.warning(t('admin.no_qr_found') if t('admin.no_qr_found') else "⚠️ No QR code found in image")
+                        except ImportError:
+                            st.error("❌ Please install: pip install opencv-python pyzbar")
+                        except Exception as e:
+                            st.error(f"❌ Error: {str(e)}")
+                
+                else:
+                    # إدخال الكود يدوياً
+                    qr_code_value = st.text_input(
+                        t('admin.enter_qr_code') if t('admin.enter_qr_code') else "Enter QR Code",
+                        placeholder="e.g. 0FD0E0E221015BE8"
+                    )
+                
+                # معالجة الكود
+                if qr_code_value:
+                    emp = db.get_employee_by_qr_token(qr_code_value.strip().upper())
+                    
+                    if emp:
+                        st.markdown(f"""
+                        <div style="background: #1a1a2e; padding: 20px; border-radius: 10px; border-left: 4px solid #D4AF37; margin: 20px 0;">
+                            <h4 style="color: #D4AF37; margin: 0;">👤 {emp['first_name']} {emp.get('last_name', '')}</h4>
+                            <p style="color: white;">{t('admin.employees')} ID: {emp['id']}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # عرض حالة اليوم
+                        today_record = db.get_attendance_today(emp['id'])
+                        
+                        qr_col1, qr_col2 = st.columns(2)
+                        
+                        with qr_col1:
+                            if st.button(f"✅ {t('admin.check_in')}", type="primary", use_container_width=True, key="qr_checkin"):
+                                result = db.record_check_in(emp['id'])
+                                if result['success']:
+                                    st.success(f"✅ {t('admin.check_in_recorded')} - {result['time']}")
+                                    st.balloons()
+                                else:
+                                    st.warning(f"⚠️ {t('admin.already_checked_in')}")
+                        
+                        with qr_col2:
+                            if st.button(f"🚪 {t('admin.check_out')}", type="secondary", use_container_width=True, key="qr_checkout"):
+                                result = db.record_check_out(emp['id'])
+                                if result['success']:
+                                    adj = result.get('adjustment', {})
+                                    msg = f"✅ {t('admin.check_out_recorded')}\n"
+                                    msg += f"⏱️ {t('admin.worked_hours')}: {result['net_worked_hours']:.2f}h"
+                                    if adj.get('type') == 'overtime':
+                                        msg += f"\n💰 +€{adj['amount']:.2f}"
+                                    elif adj.get('type') == 'deduction':
+                                        msg += f"\n⚠️ -€{adj['amount']:.2f}"
+                                    st.success(msg)
+                                else:
+                                    st.error(f"❌ {t('admin.no_check_in_found')}")
+                        
+                        # عرض الحالة الحالية
+                        if today_record:
+                            status_color = "#27ae60" if today_record.get('status') == 'complete' else "#f39c12"
+                            st.markdown(f"""
+                            <div style="background: #1a1a2e; padding: 15px; border-radius: 10px; border-left: 4px solid {status_color}; margin-top: 20px;">
+                                <p style="color: white;">🕒 {t('admin.check_in')}: {today_record.get('check_in', '-')[:16] if today_record.get('check_in') else '-'}</p>
+                                <p style="color: white;">🕕 {t('admin.check_out')}: {today_record.get('check_out', '-')[:16] if today_record.get('check_out') else '-'}</p>
+                                <p style="color: #D4AF37;">⏱️ {t('admin.worked_hours')}: {today_record.get('net_worked_hours', 0):.2f}h</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.error(t('admin.invalid_qr') if t('admin.invalid_qr') else "❌ Invalid QR Code - Employee not found")
 
         elif admin_menu == t('admin.employees'):
             st.subheader(f"👔 {t('admin.employees')}")

@@ -178,6 +178,40 @@ class DatabaseManager:
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )''')
 
+            # 3.6 جدول سجل الحضور (Attendance Logs)
+            cursor.execute('''CREATE TABLE IF NOT EXISTS attendance_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id INTEGER NOT NULL,
+                date DATE NOT NULL,
+                check_in DATETIME,
+                check_out DATETIME,
+                net_worked_hours REAL DEFAULT 0,
+                break_deducted INTEGER DEFAULT 0,
+                status TEXT DEFAULT 'incomplete',
+                notes TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (employee_id) REFERENCES employees(id)
+            )''')
+
+            # 3.7 جدول تعديلات الراتب (Salary Adjustments)
+            cursor.execute('''CREATE TABLE IF NOT EXISTS salary_adjustments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id INTEGER NOT NULL,
+                date DATE NOT NULL,
+                adjustment_type TEXT NOT NULL,
+                hours REAL DEFAULT 0,
+                amount REAL DEFAULT 0,
+                description TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (employee_id) REFERENCES employees(id)
+            )''')
+
+            # إضافة عمود QR للموظفين
+            try:
+                cursor.execute("ALTER TABLE employees ADD COLUMN qr_token TEXT UNIQUE")
+            except sqlite3.OperationalError:
+                pass
+
             # 4. جدول الإعدادات العامة
             cursor.execute('''CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY, 
@@ -724,6 +758,14 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM employees ORDER BY is_active DESC, first_name ASC")
             return [dict(row) for row in cursor.fetchall()]
+
+    def get_employee(self, employee_id: int) -> Optional[Dict]:
+        """جلب موظف واحد بالـ ID"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM employees WHERE id = ?", (employee_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
 
     def update_employee(self, emp_id: int, **kwargs):
         """تحديث بيانات موظف"""
@@ -1366,4 +1408,253 @@ class DatabaseManager:
                 WHERE employee_id = ? AND year = ? AND month = ?
             ''', (employee_id, year, month))
             return cursor.fetchone() is not None
+
+    # ===== 4.0 نظام الحضور والانصراف (Attendance System) =====
+
+    def generate_employee_qr_token(self, employee_id: int) -> str:
+        """توليد رمز QR فريد للموظف"""
+        import uuid
+        import hashlib
+        
+        # توليد رمز فريد
+        unique_string = f"{employee_id}-{uuid.uuid4()}"
+        qr_token = hashlib.sha256(unique_string.encode()).hexdigest()[:16].upper()
+        
+        with self.get_connection() as conn:
+            conn.execute("UPDATE employees SET qr_token = ? WHERE id = ?", (qr_token, employee_id))
+        
+        return qr_token
+
+    def get_employee_by_qr_token(self, qr_token: str) -> Optional[Dict]:
+        """جلب بيانات الموظف بناءً على رمز QR"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM employees WHERE qr_token = ? AND is_active = 1", (qr_token,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def record_check_in(self, employee_id: int, notes: str = None) -> Dict:
+        """تسجيل حضور الموظف"""
+        today = datetime.now().date()
+        now = datetime.now()
+        
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # التحقق من عدم وجود تسجيل سابق اليوم
+            cursor.execute('''
+                SELECT * FROM attendance_logs 
+                WHERE employee_id = ? AND date = ? AND check_out IS NULL
+            ''', (employee_id, today))
+            
+            existing = cursor.fetchone()
+            if existing:
+                return {'success': False, 'message': 'already_checked_in', 'data': dict(existing)}
+            
+            # تسجيل الحضور
+            cursor.execute('''
+                INSERT INTO attendance_logs (employee_id, date, check_in, status, notes)
+                VALUES (?, ?, ?, 'incomplete', ?)
+            ''', (employee_id, today, now, notes))
+            
+            return {'success': True, 'message': 'check_in_recorded', 'time': now.strftime('%H:%M:%S')}
+
+    def record_check_out(self, employee_id: int) -> Dict:
+        """تسجيل انصراف الموظف وحساب ساعات العمل"""
+        today = datetime.now().date()
+        now = datetime.now()
+        
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # جلب سجل الحضور اليوم
+            cursor.execute('''
+                SELECT * FROM attendance_logs 
+                WHERE employee_id = ? AND date = ? AND check_out IS NULL
+            ''', (employee_id, today))
+            
+            record = cursor.fetchone()
+            if not record:
+                return {'success': False, 'message': 'no_check_in_found'}
+            
+            record = dict(record)
+            check_in = datetime.fromisoformat(record['check_in'])
+            
+            # حساب ساعات العمل
+            total_hours = (now - check_in).total_seconds() / 3600
+            
+            # خصم الاستراحة (ساعة واحدة) فقط إذا العمل > 6 ساعات
+            break_deducted = 0
+            if total_hours > 6:
+                break_deducted = 1
+                net_worked_hours = total_hours - 1
+            else:
+                net_worked_hours = total_hours
+            
+            # تحديث السجل
+            cursor.execute('''
+                UPDATE attendance_logs 
+                SET check_out = ?, net_worked_hours = ?, break_deducted = ?, status = 'complete'
+                WHERE id = ?
+            ''', (now, round(net_worked_hours, 2), break_deducted, record['id']))
+            
+            # حساب التعديلات على الراتب (تمرير cursor لتجنب قفل قاعدة البيانات)
+            adjustment = self._calculate_salary_adjustment(cursor, employee_id, today, net_worked_hours)
+            
+            return {
+                'success': True, 
+                'message': 'check_out_recorded',
+                'check_in': check_in.strftime('%H:%M'),
+                'check_out': now.strftime('%H:%M'),
+                'total_hours': round(total_hours, 2),
+                'net_worked_hours': round(net_worked_hours, 2),
+                'break_deducted': break_deducted,
+                'adjustment': adjustment
+            }
+
+    def _calculate_salary_adjustment(self, cursor, employee_id: int, date, net_worked_hours: float) -> Dict:
+        """حساب تعديلات الراتب (عمل إضافي أو خصم)"""
+        STANDARD_HOURS = 8
+        OVERTIME_MULTIPLIER = 1.5
+        
+        # جلب الراتب الشهري للموظف
+        cursor.execute("SELECT * FROM employees WHERE id = ?", (employee_id,))
+        row = cursor.fetchone()
+        if not row:
+            return {'type': None, 'hours': 0, 'amount': 0}
+        
+        employee = dict(row)
+        monthly_salary = employee.get('monthly_salary', 0)
+        # حساب سعر الساعة (26 يوم عمل × 8 ساعات = 208 ساعة شهرياً)
+        hourly_rate = monthly_salary / 208 if monthly_salary > 0 else 0
+        
+        adjustment = {'type': None, 'hours': 0, 'amount': 0, 'description': ''}
+        
+        if net_worked_hours > STANDARD_HOURS:
+            # عمل إضافي
+            overtime_hours = net_worked_hours - STANDARD_HOURS
+            overtime_amount = overtime_hours * hourly_rate * OVERTIME_MULTIPLIER
+            
+            adjustment = {
+                'type': 'overtime',
+                'hours': round(overtime_hours, 2),
+                'amount': round(overtime_amount, 2),
+                'description': f'Overtime: +{overtime_hours:.1f} hours'
+            }
+            
+            cursor.execute('''
+                INSERT INTO salary_adjustments (employee_id, date, adjustment_type, hours, amount, description)
+                VALUES (?, ?, 'overtime', ?, ?, ?)
+            ''', (employee_id, date, overtime_hours, overtime_amount, adjustment['description']))
+            
+        elif net_worked_hours < STANDARD_HOURS:
+            # خصم
+            deduction_hours = STANDARD_HOURS - net_worked_hours
+            deduction_amount = deduction_hours * hourly_rate
+            
+            adjustment = {
+                'type': 'deduction',
+                'hours': round(deduction_hours, 2),
+                'amount': round(deduction_amount, 2),
+                'description': f'Deduction: -{deduction_hours:.1f} hours'
+            }
+            
+            cursor.execute('''
+                INSERT INTO salary_adjustments (employee_id, date, adjustment_type, hours, amount, description)
+                VALUES (?, ?, 'deduction', ?, ?, ?)
+            ''', (employee_id, date, deduction_hours, deduction_amount, adjustment['description']))
+        
+        return adjustment
+
+    def get_attendance_today(self, employee_id: int) -> Optional[Dict]:
+        """جلب سجل حضور اليوم للموظف"""
+        today = datetime.now().date()
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM attendance_logs WHERE employee_id = ? AND date = ?
+            ''', (employee_id, today))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def get_monthly_attendance(self, employee_id: int, year: int, month: int) -> List[Dict]:
+        """جلب سجل الحضور الشهري للموظف"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM attendance_logs 
+                WHERE employee_id = ? 
+                AND strftime('%Y', date) = ? 
+                AND strftime('%m', date) = ?
+                ORDER BY date
+            ''', (employee_id, str(year), f'{month:02d}'))
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_monthly_adjustments(self, employee_id: int, year: int, month: int) -> Dict:
+        """جلب ملخص تعديلات الراتب الشهرية"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # العمل الإضافي
+            cursor.execute('''
+                SELECT COALESCE(SUM(hours), 0) as total_hours, COALESCE(SUM(amount), 0) as total_amount
+                FROM salary_adjustments 
+                WHERE employee_id = ? 
+                AND strftime('%Y', date) = ? 
+                AND strftime('%m', date) = ?
+                AND adjustment_type = 'overtime'
+            ''', (employee_id, str(year), f'{month:02d}'))
+            overtime = cursor.fetchone()
+            
+            # الخصومات
+            cursor.execute('''
+                SELECT COALESCE(SUM(hours), 0) as total_hours, COALESCE(SUM(amount), 0) as total_amount
+                FROM salary_adjustments 
+                WHERE employee_id = ? 
+                AND strftime('%Y', date) = ? 
+                AND strftime('%m', date) = ?
+                AND adjustment_type = 'deduction'
+            ''', (employee_id, str(year), f'{month:02d}'))
+            deductions = cursor.fetchone()
+            
+            return {
+                'overtime_hours': overtime['total_hours'] or 0,
+                'overtime_amount': overtime['total_amount'] or 0,
+                'deduction_hours': deductions['total_hours'] or 0,
+                'deduction_amount': deductions['total_amount'] or 0,
+                'net_adjustment': (overtime['total_amount'] or 0) - (deductions['total_amount'] or 0)
+            }
+
+    def close_incomplete_attendance(self):
+        """إغلاق سجلات الحضور غير المكتملة (تشغيل في منتصف الليل)"""
+        yesterday = (datetime.now() - timedelta(days=1)).date()
+        
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # جلب السجلات غير المكتملة من الأمس
+            cursor.execute('''
+                SELECT * FROM attendance_logs 
+                WHERE date = ? AND status = 'incomplete'
+            ''', (yesterday,))
+            
+            incomplete = cursor.fetchall()
+            
+            for record in incomplete:
+                record = dict(record)
+                # تعيين وقت الانصراف كنهاية اليوم
+                check_in = datetime.fromisoformat(record['check_in'])
+                end_of_day = datetime.combine(yesterday, datetime.max.time().replace(hour=23, minute=59))
+                
+                total_hours = (end_of_day - check_in).total_seconds() / 3600
+                net_worked = max(0, total_hours - 1) if total_hours > 6 else total_hours
+                
+                cursor.execute('''
+                    UPDATE attendance_logs 
+                    SET check_out = ?, net_worked_hours = ?, status = 'auto_closed', 
+                        notes = COALESCE(notes, '') || ' [Auto-closed at midnight]'
+                    WHERE id = ?
+                ''', (end_of_day, round(net_worked, 2), record['id']))
+            
+            return len(incomplete)
 
