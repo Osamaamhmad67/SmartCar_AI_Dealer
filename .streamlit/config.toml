@@ -1,0 +1,65 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# SmartCar AI-Dealer - PREMIUM LUXURY DARK THEME
+# Professional UI/UX Design System
+# ═══════════════════════════════════════════════════════════════════════════
+
+[theme]
+# Base theme
+base = "dark"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PREMIUM COLOR PALETTE
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Primary accent color (Metallic Gold)
+primaryColor = "#D4AF37"
+
+# Soft Black - Better for eyes, reduces OLED smearing
+backgroundColor = "#0E1117"
+
+# Slightly lighter dark for depth
+secondaryBackgroundColor = "#161B22"
+
+# Smoky White - Comfortable reading
+textColor = "#E0E0E0"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TYPOGRAPHY - Cairo with Arabic Support
+# ─────────────────────────────────────────────────────────────────────────────
+font = "Cairo:https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap, sans-serif"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# UI STYLING - Premium Look
+# ─────────────────────────────────────────────────────────────────────────────
+baseRadius = "0.5rem"
+buttonRadius = "0.5rem"
+borderColor = "rgba(212, 175, 55, 0.4)"
+showWidgetBorder = true
+showSidebarBorder = false
+
+# Code blocks
+codeBackgroundColor = "#0D1117"
+codeTextColor = "#7EE787"
+
+# Status colors
+greenColor = "#3FB950"
+yellowColor = "#D29922"
+redColor = "#F85149"
+blueColor = "#58A6FF"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SIDEBAR - Matching Premium Theme
+# ═══════════════════════════════════════════════════════════════════════════
+[theme.sidebar]
+backgroundColor = "#161B22"
+secondaryBackgroundColor = "#0E1117"
+textColor = "#E0E0E0"
+primaryColor = "#D4AF37"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SERVER CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+[server]
+enableCORS = false
+enableXsrfProtection = true
+maxUploadSize = 200

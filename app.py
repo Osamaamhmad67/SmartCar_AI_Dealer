@@ -4110,7 +4110,7 @@ def home_page():
         with menu_col:
             admin_menu = st.selectbox(
                 f"📂 {t('admin.select_section')}",
-                [t('admin.statistics'), t('admin.users'), t('admin.employees'), t('admin.transactions'), t('admin.financial_settings')],
+                [t('admin.statistics'), t('admin.users'), t('admin.employees'), t('admin.payroll'), t('admin.transactions'), t('admin.financial_settings'), t('admin.profit_reports')],
                 label_visibility="collapsed"
             )
         
@@ -4343,6 +4343,139 @@ def home_page():
                     }
                     db.set_setting('interest_rates', new_settings)
                     st.success(f"✅ {t('messages.success')}")
+            
+            # === قسم نسبة ربح الشركة ===
+            st.markdown("---")
+            st.subheader(f"💰 {t('admin.company_profit_margin')}")
+            st.info(t('admin.profit_margin_info'))
+            
+            # جلب القيمة الحالية
+            current_margin = db.get_setting('company_profit_margin', 0.20)
+            
+            # حقل الإدخال مع التحقق
+            new_margin = st.number_input(
+                t('admin.profit_percentage'),
+                min_value=0.15,
+                max_value=0.30,
+                value=float(current_margin),
+                step=0.01,
+                format="%.2f",
+                key="profit_margin_input"
+            )
+            st.caption(f"{t('admin.current_percentage')}: {new_margin*100:.1f}%")
+            
+            # عرض تحذير إذا كانت القيمة خارج النطاق
+            if new_margin < 0.15 or new_margin > 0.30:
+                st.error(t('admin.profit_margin_error'))
+            
+            # زر الحفظ مع تأكيد كلمة المرور
+            if abs(new_margin - float(current_margin)) > 0.001:
+                st.warning(t('admin.password_required_to_save'))
+                confirm_password = st.text_input(
+                    t('admin.enter_password'), 
+                    type="password", 
+                    key="profit_margin_password"
+                )
+                
+                if st.button(f"💾 {t('admin.save_profit_margin')}", type="primary", key="save_profit_btn"):
+                    if not confirm_password:
+                        st.error(t('admin.password_required'))
+                    elif 0.15 <= new_margin <= 0.30:
+                        # التحقق من كلمة المرور
+                        from auth import AuthManager
+                        auth = AuthManager()
+                        user = auth.get_current_user()
+                        user_data = db.get_user_by_username(user['username'])
+                        
+                        if user_data and auth.check_password(confirm_password, user_data['password_hash']):
+                            db.set_setting('company_profit_margin', new_margin)
+                            st.success(f"✅ {t('admin.profit_margin_saved')}")
+                            st.rerun()
+                        else:
+                            st.error(t('admin.wrong_password'))
+                    else:
+                        st.error(t('admin.profit_margin_error'))
+
+        # === قسم تقارير الأرباح ===
+        elif admin_menu == t('admin.profit_reports'):
+            st.subheader(f"📊 {t('admin.profit_reports')}")
+            
+            # اختيار السنة
+            available_years = db.get_available_years()
+            from datetime import datetime
+            current_year = datetime.now().year
+            
+            selected_year = st.selectbox(
+                t('admin.select_year'),
+                available_years,
+                index=0 if current_year in available_years else 0
+            )
+            
+            # جلب البيانات
+            yearly_data = db.get_yearly_profit(selected_year)
+            monthly_data = db.get_monthly_profits(selected_year)
+            quarterly_data = db.get_quarterly_profits(selected_year)
+            
+            # عرض نسبة الربح المستخدمة
+            st.info(f"📌 {t('admin.profit_margin_used')}: **{yearly_data['profit_margin']*100:.1f}%**")
+            
+            # === الملخص السنوي ===
+            st.markdown("---")
+            st.markdown(f"### 📅 {t('admin.yearly_profits')} - {selected_year}")
+            
+            yr_col1, yr_col2, yr_col3 = st.columns(3)
+            with yr_col1:
+                st.metric(t('admin.sales_count'), f"{yearly_data['sales_count']}")
+            with yr_col2:
+                st.metric(t('admin.total_sales'), f"€{yearly_data['total_sales']:,.2f}")
+            with yr_col3:
+                st.metric(t('admin.total_profit'), f"€{yearly_data['profit']:,.2f}")
+            
+            # === الأرباح ربع السنوية ===
+            st.markdown("---")
+            st.markdown(f"### 📊 {t('admin.quarterly_profits')}")
+            
+            q_col1, q_col2, q_col3, q_col4 = st.columns(4)
+            quarter_names = [t('admin.quarter_1'), t('admin.quarter_2'), t('admin.quarter_3'), t('admin.quarter_4')]
+            
+            for idx, (col, q_data) in enumerate(zip([q_col1, q_col2, q_col3, q_col4], quarterly_data)):
+                with col:
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); 
+                                padding: 15px; border-radius: 10px; text-align: center; margin: 5px;">
+                        <h4 style="color: #D4AF37; margin: 0;">{quarter_names[idx]}</h4>
+                        <p style="font-size: 1.8rem; color: #4CAF50; margin: 10px 0;">€{q_data['profit']:,.0f}</p>
+                        <p style="color: #888; font-size: 0.8rem;">{t('admin.sales_count')}: {q_data['sales_count']}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # === الأرباح الشهرية ===
+            st.markdown("---")
+            st.markdown(f"### 📈 {t('admin.monthly_profits')}")
+            
+            # رسم بياني للأرباح الشهرية
+            import pandas as pd
+            month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            
+            df = pd.DataFrame({
+                'Month': month_names,
+                t('admin.total_profit'): [m['profit'] for m in monthly_data],
+                t('admin.total_sales'): [m['total_sales'] for m in monthly_data]
+            })
+            
+            st.bar_chart(df.set_index('Month')[[t('admin.total_profit')]])
+            
+            # جدول الأرباح الشهرية
+            with st.expander(f"📋 {t('admin.monthly_profits')} - {t('buttons.details')}"):
+                table_data = []
+                for m in monthly_data:
+                    table_data.append({
+                        'Month': month_names[m['month']-1],
+                        t('admin.sales_count'): m['sales_count'],
+                        t('admin.total_sales'): f"€{m['total_sales']:,.2f}",
+                        t('admin.total_profit'): f"€{m['profit']:,.2f}"
+                    })
+                st.dataframe(pd.DataFrame(table_data), use_container_width=True)
 
         elif admin_menu == t('admin.employees'):
             st.subheader(f"👔 {t('admin.employees')}")
@@ -5006,6 +5139,222 @@ def home_page():
             else:
                 st.info(t('admin.no_employees'))
 
+        elif admin_menu == t('admin.payroll'):
+            st.subheader(f"💰 {t('admin.payroll')}")
+            
+            import calendar
+            from utils import InvoiceGenerator, NotificationManager
+            from utils.i18n import get_current_lang
+            
+            # جلب اللغة الحالية للتطبيق
+            lang = get_current_lang()
+            
+            # تنبيه نهاية الشهر
+            today = datetime.now()
+            days_in_month = calendar.monthrange(today.year, today.month)[1]
+            if today.day >= days_in_month - 2:
+                st.warning(f"⚠️ {t('admin.payroll_reminder')}")
+            
+            # اختيار الشهر والسنة
+            col_month, col_year, col_gen = st.columns([2, 2, 3])
+            
+            month_names = {
+                'en': ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'],
+                'de': ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                       'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
+                'ar': ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+                       'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+            }
+            lang = st.session_state.get('language', 'de')
+            current_months = month_names.get(lang, month_names['en'])
+            
+            with col_month:
+                selected_month_idx = st.selectbox(
+                    f"📅 {t('admin.select_month')}",
+                    range(1, 13),
+                    index=today.month - 1,
+                    format_func=lambda x: current_months[x-1],
+                    key="payroll_month"
+                )
+            
+            with col_year:
+                available_years = list(range(2024, today.year + 2))
+                selected_year = st.selectbox(
+                    f"📅 {t('admin.select_year')}",
+                    available_years,
+                    index=available_years.index(today.year),
+                    key="payroll_year"
+                )
+            
+            # جلب الموظفين النشطين
+            employees = db.get_active_employees_for_payroll()
+            
+            if not employees:
+                st.info(f"ℹ️ {t('admin.no_employees_payroll')}")
+            else:
+                # حساب إجمالي الرواتب
+                total_gross = sum(float(emp.get('monthly_salary', 0) or 0) for emp in employees)
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); 
+                            padding: 15px 20px; border-radius: 12px; margin: 15px 0;
+                            border: 2px solid #D4AF37;">
+                    <h4 style="color: #D4AF37; margin: 0;">
+                        💵 {t('admin.total_payroll')}: <span style="color: #4CAF50;">{total_gross:,.2f} EUR</span>
+                        | 👥 {len(employees)} {t('admin.employees')}
+                    </h4>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                with col_gen:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button(f"📄 {t('admin.generate_all_invoices')}", key="gen_all_salaries", type="primary", use_container_width=True):
+                        gen = InvoiceGenerator()
+                        generated_count = 0
+                        
+                        progress_bar = st.progress(0)
+                        for idx, emp in enumerate(employees):
+                            try:
+                                # التحقق من عدم وجود فاتورة مسبقة
+                                if not db.salary_invoice_exists(emp['id'], selected_year, selected_month_idx):
+                                    pdf_path = gen.generate_salary_invoice(
+                                        emp, selected_month_idx, selected_year,
+                                        has_children=True, church_tax=False, tax_class=1, lang='de'
+                                    )
+                                    
+                                    # حفظ في قاعدة البيانات
+                                    calc = getattr(gen, '_last_salary_calculation', {})
+                                    db.create_salary_invoice(
+                                        employee_id=emp['id'],
+                                        month=selected_month_idx,
+                                        year=selected_year,
+                                        gross_salary=calc.get('gross_salary', 0),
+                                        net_salary=calc.get('net_salary', 0),
+                                        feiertags_geld=calc.get('holiday_bonus', 0),
+                                        urlaubsgeld=calc.get('vacation_bonus', 0),
+                                        tax_amount=calc.get('total_taxes', 0),
+                                        insurance_amount=calc.get('total_sozialversicherung', 0),
+                                        deductions=calc.get('other_deductions', 0),
+                                        pdf_path=pdf_path
+                                    )
+                                    generated_count += 1
+                            except Exception as e:
+                                st.error(f"❌ {emp.get('first_name')} {emp.get('last_name')}: {e}")
+                            
+                            progress_bar.progress((idx + 1) / len(employees))
+                        
+                        if generated_count > 0:
+                            st.success(f"✅ {t('admin.salary_generated')} ({generated_count})")
+                        st.rerun()
+                
+                st.markdown("---")
+                
+                # جلب الفواتير الموجودة لهذا الشهر
+                existing_invoices = db.get_salary_invoices_by_month(selected_year, selected_month_idx)
+                invoice_map = {inv['employee_id']: inv for inv in existing_invoices}
+                
+                # عرض قائمة الموظفين
+                for emp in employees:
+                    emp_id = emp.get('id')
+                    full_name = f"{emp.get('first_name', '')} {emp.get('last_name', '')}".strip()
+                    salary = float(emp.get('monthly_salary', 0) or 0)
+                    job = emp.get('job_title', 'N/A')
+                    
+                    invoice = invoice_map.get(emp_id)
+                    status_icon = "✅" if invoice else "⏳"
+                    status_text = t('admin.generated') if invoice else t('admin.pending')
+                    
+                    with st.expander(f"{status_icon} {full_name} | {job} | {salary:,.2f} EUR | {status_text}", expanded=False):
+                        col1, col2, col3 = st.columns([3, 2, 2])
+                        
+                        with col1:
+                            st.markdown(f"""
+                            <div style="color: #E0E0E0;">
+                                <p><b>{t('admin.gross_salary')}:</b> {salary:,.2f} EUR</p>
+                                <p><b>{t('admin.feiertags_geld')}:</b> {float(emp.get('feiertags_geld', 0) or 0):,.2f} EUR</p>
+                                <p><b>{t('admin.urlaubsgeld')}:</b> {float(emp.get('urlaubsgeld', 0) or 0):,.2f} EUR</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with col2:
+                            if invoice:
+                                net = float(invoice.get('net_salary', 0) or 0)
+                                st.markdown(f"""
+                                <div style="background: rgba(76, 175, 80, 0.2); padding: 10px; border-radius: 8px; border-left: 4px solid #4CAF50;">
+                                    <b style="color: #4CAF50;">{t('admin.net_salary')}</b><br>
+                                    <span style="color: #FFFFFF; font-size: 1.3em;">{net:,.2f} EUR</span>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            else:
+                                # حساب صافي تقديري - بالضرائب الألمانية
+                                if selected_month_idx == 12:
+                                    gross_total = salary + float(emp.get('feiertags_geld', 0) or 0) + float(emp.get('urlaubsgeld', 0) or 0)
+                                else:
+                                    gross_total = salary
+                                # الاقتطاعات الألمانية التقريبية (~40% من الراتب)
+                                est_deductions = salary * 0.40  # ضرائب + تأمينات
+                                est_net = gross_total - est_deductions
+                                st.markdown(f"""
+                                <div style="background: rgba(255, 193, 7, 0.2); padding: 10px; border-radius: 8px; border-left: 4px solid #FFC107;">
+                                    <b style="color: #FFC107;">{t('admin.net_salary')} (Est.)</b><br>
+                                    <span style="color: #FFFFFF; font-size: 1.3em;">~{est_net:,.2f} EUR</span>
+                                </div>
+                                """, unsafe_allow_html=True)
+                        
+                        with col3:
+                            if invoice and invoice.get('pdf_path'):
+                                # زر التحميل
+                                pdf_path = invoice.get('pdf_path')
+                                if os.path.exists(pdf_path):
+                                    with open(pdf_path, "rb") as f:
+                                        st.download_button(
+                                            f"⬇️ {t('admin.download_salary_slip')}",
+                                            f,
+                                            file_name=os.path.basename(pdf_path),
+                                            key=f"dl_salary_{emp_id}_{selected_month_idx}_{selected_year}",
+                                            use_container_width=True
+                                        )
+                                
+                                # زر إرسال البريد
+                                if emp.get('email'):
+                                    if st.button(f"📧 {t('admin.send_by_email')}", key=f"email_salary_{emp_id}", use_container_width=True):
+                                        try:
+                                            notifier = NotificationManager()
+                                            subject = f"{t('admin.salary_slip')} - {current_months[selected_month_idx-1]} {selected_year}"
+                                            body = f"<p>Dear {full_name},</p><p>Please find attached your salary slip for {current_months[selected_month_idx-1]} {selected_year}.</p>"
+                                            if notifier.send_email(emp['email'], subject, body, is_html=True):
+                                                st.success(f"✅ {t('admin.email_sent')}")
+                                            else:
+                                                st.error("❌ Email failed")
+                                        except Exception as e:
+                                            st.error(f"❌ {e}")
+                            else:
+                                # زر إصدار فردي
+                                if st.button(f"📄 {t('admin.generate_salary_invoice')}", key=f"gen_salary_{emp_id}", use_container_width=True, type="primary"):
+                                    try:
+                                        gen = InvoiceGenerator()
+                                        pdf_path = gen.generate_salary_invoice(
+                                            emp, selected_month_idx, selected_year,
+                                            has_children=True, church_tax=False, tax_class=1, lang='de'
+                                        )
+                                        calc = getattr(gen, '_last_salary_calculation', {})
+                                        db.create_salary_invoice(
+                                            employee_id=emp_id,
+                                            month=selected_month_idx,
+                                            year=selected_year,
+                                            gross_salary=calc.get('gross_salary', 0),
+                                            net_salary=calc.get('net_salary', 0),
+                                            feiertags_geld=calc.get('holiday_bonus', 0),
+                                            urlaubsgeld=calc.get('vacation_bonus', 0),
+                                            tax_amount=calc.get('total_taxes', 0),
+                                            insurance_amount=calc.get('total_sozialversicherung', 0),
+                                            pdf_path=pdf_path
+                                        )
+                                        st.success(f"✅ {t('admin.salary_generated')}")
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"❌ {e}")
+
         elif admin_menu == t('admin.transactions'):
             st.subheader(f"💼 {t('admin.contracts_header')}")
             
@@ -5048,15 +5397,20 @@ def home_page():
                             
                             # عرض بيانات السيارة
                             if car_info and (car_info.get('brand') or car_info.get('model')):
+                                # دالة مساعدة لتجنب عرض None
+                                def safe_get(d, key, default='-'):
+                                    val = d.get(key)
+                                    return val if val not in [None, '', 'None'] else default
+                                
                                 st.markdown(f"""
                                 <div style='background: rgba(240,180,41,0.1); padding: 12px; border-radius: 8px; margin: 10px 0; border-right: 4px solid #D4AF37;'>
                                     <b style='color: #D4AF37;'>🚗 {t('checkout.car_summary')}:</b><br>
-                                    <span style='color: #FFFFFF; font-weight: bold;'>{car_info.get('brand', '-')} {car_info.get('model', '')} - {car_info.get('manufacture_year', car_info.get('year', '-'))}</span><br>
+                                    <span style='color: #FFFFFF; font-weight: bold;'>{safe_get(car_info, 'brand')} {safe_get(car_info, 'model', '')} - {safe_get(car_info, 'manufacture_year', safe_get(car_info, 'year', '-'))}</span><br>
                                     <span style='color: #a0a0c0; font-size: 0.9rem;'>
-                                        📏 {t('predict.mileage')}: {car_info.get('mileage', '-'):,} km | 
-                                        ⛽ {t('predict.fuel_type')}: {car_info.get('fuel_type', '-')} | 
-                                        🎨 {t('predict.color')}: {car_info.get('color', '-')}<br>
-                                        📋 {t('predict.condition')}: {car_info.get('condition', '-')}
+                                        📏 {t('predict.mileage')}: {car_info.get('mileage', 0) or 0:,} km | 
+                                        ⛽ {t('predict.fuel_type')}: {safe_get(car_info, 'fuel_type')} | 
+                                        🎨 {t('predict.color')}: {safe_get(car_info, 'color')}<br>
+                                        📋 {t('predict.condition')}: {safe_get(car_info, 'condition')}
                                     </span>
                                 </div>
                                 """, unsafe_allow_html=True)
@@ -5069,16 +5423,20 @@ def home_page():
                                 direct_fuel = c.get('fuel_type', '-')
                                 direct_color = c.get('color', '-')
                                 direct_condition = c.get('condition', '-')
+                                # دالة مساعدة لتجنب عرض None
+                                def safe_val(v, default='-'):
+                                    return v if v not in [None, '', 'None'] else default
+                                
                                 if direct_brand or direct_model:
                                     st.markdown(f"""
                                     <div style='background: rgba(240,180,41,0.1); padding: 12px; border-radius: 8px; margin: 10px 0; border-right: 4px solid #D4AF37;'>
                                         <b style='color: #D4AF37;'>🚗 {t('checkout.car_summary')}:</b><br>
-                                        <span style='color: #FFFFFF; font-weight: bold;'>{direct_brand} {direct_model} - {direct_year}</span><br>
+                                        <span style='color: #FFFFFF; font-weight: bold;'>{safe_val(direct_brand)} {safe_val(direct_model, '')} - {safe_val(direct_year)}</span><br>
                                         <span style='color: #a0a0c0; font-size: 0.9rem;'>
-                                            📏 {t('predict.mileage')}: {direct_mileage:,} km | 
-                                            ⛽ {t('predict.fuel_type')}: {direct_fuel} | 
-                                            🎨 {t('predict.color')}: {direct_color}<br>
-                                            📋 {t('predict.condition')}: {direct_condition}
+                                            📏 {t('predict.mileage')}: {direct_mileage if direct_mileage not in [None, '', '-'] else 0:,} km | 
+                                            ⛽ {t('predict.fuel_type')}: {safe_val(direct_fuel)} | 
+                                            🎨 {t('predict.color')}: {safe_val(direct_color)}<br>
+                                            📋 {t('predict.condition')}: {safe_val(direct_condition)}
                                         </span>
                                     </div>
                                     """, unsafe_allow_html=True)
@@ -6447,6 +6805,53 @@ def invoices_page():
                                             st.rerun()
                     else:
                         st.info(t('admin.no_customer_transactions'))
+        
+        else:
+            # === المستخدم العادي - عرض معاملاته السابقة ===
+            user = st.session_state.user
+            user_transactions = db.get_user_transactions(user['id'])
+            
+            if user_transactions:
+                st.markdown(f"### 📋 {t('invoices.your_transactions', 'Your Previous Transactions')}")
+                st.info(f"📊 {t('invoices.total_transactions', 'Total transactions')}: {len(user_transactions)}")
+                
+                for trans in user_transactions:
+                    with st.expander(f"🚗 {trans.get('brand', '')} {trans.get('model', '')} - €{trans.get('estimated_price', 0):,.2f} ({str(trans.get('created_at', ''))[:10]})"):
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.write(f"**{t('admin.car_type')}:** {trans.get('car_type', '-')}")
+                            st.write(f"**{t('admin.brand')}:** {trans.get('brand', '-')}")
+                            st.write(f"**{t('admin.model')}:** {trans.get('model', '-')}")
+                            st.write(f"**{t('admin.year')}:** {trans.get('manufacture_year', '-')}")
+                        with col2:
+                            st.write(f"**{t('admin.mileage')}:** {trans.get('mileage', 0):,} km")
+                            st.write(f"**{t('admin.fuel_type')}:** {trans.get('fuel_type', '-')}")
+                            st.write(f"**{t('admin.condition')}:** {trans.get('condition', '-')}")
+                            st.write(f"**{t('predict.color')}:** {trans.get('color', '-')}")
+                        
+                        st.markdown("---")
+                        st.markdown(f"### 💰 {t('admin.estimated_price')}: €{trans.get('estimated_price', 0):,.2f}")
+                        
+                        # زر للانتقال إلى الدفع/الطباعة
+                        if st.button(f"🖨️ {t('buttons.print_invoice', 'Print Invoice')}", key=f"user_print_{trans['id']}"):
+                            st.session_state.selected_transaction = trans
+                            st.session_state.car_data = {
+                                'brand': trans.get('brand'),
+                                'model': trans.get('model'),
+                                'manufacture_year': trans.get('manufacture_year'),
+                                'mileage': trans.get('mileage'),
+                                'car_type': trans.get('car_type'),
+                                'estimated_price': trans.get('estimated_price')
+                            }
+                            st.session_state.estimated_price = trans.get('estimated_price', 0)
+                            st.session_state.last_transaction_id = trans['id']
+                            st.session_state.page = 'checkout'
+                            st.rerun()
+            else:
+                st.info(t('invoices.no_transactions_yet', 'You have no previous transactions. Start by evaluating your car!'))
+                
+                if st.button(f"🚗 {t('nav.predict')}", type="primary"):
+                    navigate_to('predict')
                 
     except Exception as e:
         st.error(f"❌ {t('messages.error')}: {e}")
@@ -7146,7 +7551,7 @@ def profile_page():
                             with col_c1:
                                 if st.button(f"💾 {t('buttons.save')}", key=f"save_k_{contract['id']}"):
                                     gen = InvoiceGenerator()
-                                    c_path = gen.generate_contract(contract['id'], contract, user)
+                                    c_path = gen.generate_contract(contract['id'], contract, user, st.session_state.get('language', 'de'))
                                     st.session_state[f'contract_pdf_{contract["id"]}'] = c_path
                                 
                                 if f'contract_pdf_{contract["id"]}' in st.session_state:
@@ -8812,7 +9217,7 @@ def checkout_page():
         border-right: 4px solid #4facfe;
     }
     
-    /* === CHECKOUT PAGE: Force Dark Text Colors === */
+    /* === CHECKOUT PAGE: Force WHITE Text Colors for Dark Theme === */
     /* Target all form element labels with maximum specificity */
     div[data-testid="stRadio"] label,
     div[data-testid="stRadio"] label span,
@@ -8822,25 +9227,24 @@ def checkout_page():
     div[data-testid="stCheckbox"] label span,
     div[data-testid="stSelectbox"] label,
     div[data-testid="stSelectbox"] label span {
-        color: #0E1117 !important;
-        -webkit-text-fill-color: #0E1117 !important;
-        text-shadow: 0 0 0 #0E1117 !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
     }
     
-    /* Force radio button options text */
+    /* Force radio button options text to white */
     div[data-testid="stRadio"] div[role="radiogroup"] label {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
     }
     div[data-testid="stRadio"] div[role="radiogroup"] label p {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
     }
     
-    /* Selectbox dropdown text */
+    /* Selectbox dropdown text - keep readable on dropdown */
     div[data-testid="stSelectbox"] div[data-baseweb="select"] span {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -8950,6 +9354,37 @@ def checkout_page():
     </div>
     """, unsafe_allow_html=True)
     
+    # === حقول إدخال VIN ورقم اللوحة ===
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #0E1117 0%, #1a2636 100%); 
+                padding: 15px; border-radius: 10px; border: 2px solid #4facfe; margin: 10px 0;">
+        <h4 style="color: #4facfe; margin: 0;">🔢 {t('checkout.vehicle_ids', 'Vehicle Identification')}</h4>
+        <p style="color: #a0a0c0; font-size: 0.9rem; margin: 5px 0 0 0;">{t('checkout.vehicle_ids_hint', 'Enter vehicle identification details (optional)')}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    vin_col, plate_col = st.columns(2)
+    with vin_col:
+        vehicle_vin = st.text_input(
+            f"🔖 {t('checkout.vin_label', 'VIN (Vehicle Identification Number)')}",
+            value=car_data.get('vin', car_data.get('vehicle_vin', '')),
+            placeholder="WVWZZZ3CZWE123456",
+            key="checkout_vin_input"
+        )
+    with plate_col:
+        vehicle_plate = st.text_input(
+            f"🚗 {t('checkout.plate_label', 'Plate Number')}",
+            value=car_data.get('plate', car_data.get('vehicle_plate', '')),
+            placeholder="B-AB 1234",
+            key="checkout_plate_input"
+        )
+    
+    # تحديث car_data مع VIN ورقم اللوحة
+    car_data['vehicle_vin'] = vehicle_vin
+    car_data['vehicle_plate'] = vehicle_plate
+    car_data['vin'] = vehicle_vin
+    car_data['plate'] = vehicle_plate
+    
     # === اختيار العميل للأدمن ===
     if st.session_state.user.get('role') == 'admin':
         st.markdown("""
@@ -8974,8 +9409,8 @@ def checkout_page():
             )
             
             st.session_state['admin_selected_customer_id'] = customer_options.get(selected_customer_key)
-            st.markdown(f"""<div style='background-color: #d4edda; padding: 12px 16px; border-radius: 8px; border-right: 4px solid #28a745; margin: 10px 0;'>
-                <span style='color: #155724 !important; -webkit-text-fill-color: #155724 !important; font-size: 0.95rem; font-weight: 500;'>✅ {t('admin.link_contract_info')}</span>
+            st.markdown(f"""<div style='background: linear-gradient(135deg, #0E1117 0%, #1a2e1a 100%); padding: 12px 16px; border-radius: 8px; border-right: 4px solid #28a745; margin: 10px 0;'>
+                <span style='color: #38ef7d !important; font-size: 0.95rem; font-weight: 500;'>✅ {t('admin.link_contract_info')}</span>
             </div>""", unsafe_allow_html=True)
         else:
             st.warning(f"⚠️ {t('admin.no_customers')}")
@@ -9020,6 +9455,20 @@ def checkout_page():
     payment_method_locked = has_previous_payments and not is_admin
     
     # إزالة التقسيم إلى أعمدة لإعطاء المحتوى العرض الكامل
+    # CSS لإصلاح لون نصوص الـ Radio buttons
+    st.markdown("""
+    <style>
+        /* إصلاح لون نصوص Radio buttons في صفحة الدفع */
+        div[data-testid="stRadio"] label p,
+        div[data-testid="stRadio"] label span {
+            color: #FFFFFF !important;
+        }
+        div[data-testid="stRadio"] > label > div > p {
+            color: #FFFFFF !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
     with st.container():
         st.subheader(f"1. {t('checkout.payment_method_label')}")
         
@@ -9088,7 +9537,7 @@ def checkout_page():
         
         if t('checkout.choose_installment_plan') in plan_type or "Installments" in plan_type:
             # خيارات التقسيط المحددة
-            st.markdown(f"<p style='color: #0E1117; font-weight: bold; margin: 10px 0;'>{t('checkout.choose_installment_plan')}:</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='color: #FFFFFF; font-weight: bold; margin: 10px 0;'>{t('checkout.choose_installment_plan')}:</p>", unsafe_allow_html=True)
             
             # تحديد القيمة الافتراضية للخطة من التفضيلات المحفوظة
             default_plan_choice_index = 0  # افتراضي: 3 أشهر
@@ -9117,7 +9566,7 @@ def checkout_page():
                 
             # === حقل الدفعة المقدمة (Down Payment) ===
             st.markdown("---")
-            st.markdown(f"<div style='background-color: #fff3cd; padding: 10px 15px; border-radius: 8px; border-right: 4px solid #ffc107; margin: 10px 0;'><span style='color: #856404 !important; -webkit-text-fill-color: #856404 !important; font-weight: bold; font-size: 1rem; text-shadow: 0 0 0 #856404;'>💵 {t('checkout.down_payment_label')}:</span></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='background: linear-gradient(135deg, #0E1117 0%, #2d2a1a 100%); padding: 10px 15px; border-radius: 8px; border-right: 4px solid #D4AF37; margin: 10px 0;'><span style='color: #D4AF37; font-weight: bold; font-size: 1rem;'>💵 {t('checkout.down_payment_label')}:</span></div>", unsafe_allow_html=True)
             
             # تحديد القيمة الافتراضية للدفعة المقدمة
             default_down_payment = 0.0
@@ -9206,8 +9655,8 @@ def checkout_page():
                 
                 # --- ميزة 1: عرض QR كود للدفع (للعميل) ---
                 st.markdown(f"""
-                <div style='background-color: #e8f4fd; padding: 12px 16px; border-radius: 8px; margin: 10px 0; border-right: 4px solid #4a9eff;'>
-                    <span style='color: #004085 !important; -webkit-text-fill-color: #004085 !important; font-size: 0.95rem; text-shadow: 0 0 0 #004085;'>ℹ️ {t('checkout.scan_qr_hint')}</span>
+                <div style='background: linear-gradient(135deg, #0E1117 0%, #1a2636 100%); padding: 12px 16px; border-radius: 8px; margin: 10px 0; border-right: 4px solid #4a9eff;'>
+                    <span style='color: #4facfe; font-size: 0.95rem;'>ℹ️ {t('checkout.scan_qr_hint')}</span>
                 </div>
                 """, unsafe_allow_html=True)
                 # عرض checkbox مع Label في columns
@@ -9215,8 +9664,8 @@ def checkout_page():
                 with qr_col1:
                     show_qr = st.checkbox("‎", key="show_qr_code_checkbox", label_visibility="collapsed")
                 with qr_col2:
-                    st.markdown(f"""<div style='background-color: #d1ecf1; padding: 8px 15px; border-radius: 8px; border-right: 4px solid #17a2b8; display: inline-block;'>
-                        <span style='color: #0c5460 !important; -webkit-text-fill-color: #0c5460 !important; font-weight: bold; font-size: 1rem; text-shadow: 0 0 0 #0c5460;'>📱 {t('checkout.show_qr_btn')} 📱</span>
+                    st.markdown(f"""<div style='background: linear-gradient(135deg, #0E1117 0%, #1a3636 100%); padding: 8px 15px; border-radius: 8px; border-right: 4px solid #17a2b8; display: inline-block;'>
+                        <span style='color: #17a2b8; font-weight: bold; font-size: 1rem;'>{t('checkout.show_qr_btn')}</span>
                     </div>""", unsafe_allow_html=True)
                 if show_qr:
                     # بيانات الشركة
@@ -9286,7 +9735,7 @@ EUR{amount_to_pay:.2f}
 
 
                 st.write("---")
-                st.markdown(f"<div style='background-color: #d4edda; padding: 10px 15px; border-radius: 8px; border-right: 4px solid #28a745; margin: 10px 0;'><span style='color: #155724 !important; -webkit-text-fill-color: #155724 !important; font-weight: bold; font-size: 1rem; text-shadow: 0 0 0 #155724;'>📎 {t('checkout.upload_proof_label')}:</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='background: linear-gradient(135deg, #0E1117 0%, #1a2e1a 100%); padding: 10px 15px; border-radius: 8px; border-right: 4px solid #28a745; margin: 10px 0;'><span style='color: #38ef7d; font-weight: bold; font-size: 1rem;'>📎 {t('checkout.upload_proof_label')}:</span></div>", unsafe_allow_html=True)
                 
                 # --- ميزة 2: خيار الكاميرا أو رفع ملف ---
                 upload_method = st.radio(t('checkout.upload_method_label'), [t('checkout.upload_file_option'), t('checkout.camera_option')], horizontal=True)
@@ -9301,7 +9750,7 @@ EUR{amount_to_pay:.2f}
                 # --- NEW: خيارات جدولة الأقساط (مرونة الدفع) ---
                 if t('checkout.choose_installment_plan') in plan_type or "Installments" in plan_type:
                     st.write("---")
-                    st.markdown(f"<p style='color: #0E1117; font-weight: bold; margin: 10px 0;'>{t('checkout.payment_preferences')}:</p>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='color: #FFFFFF; font-weight: bold; margin: 10px 0;'>{t('checkout.payment_preferences')}:</p>", unsafe_allow_html=True)
                     
                     # تحديد القيم الافتراضية من التفضيلات المحفوظة
                     default_due_day_index = 0  # افتراضي: يوم 1
@@ -9332,14 +9781,19 @@ EUR{amount_to_pay:.2f}
                     -webkit-text-fill-color: #0E1117 !important;
                 }
                 [data-testid="stButton"] button:not([data-testid="baseButton-primary"]) p,
-                [data-testid="stButton"] button:not([data-testid="baseButton-primary"]) span {
-                    color: #0E1117 !important;
-                    -webkit-text-fill-color: #0E1117 !important;
+                [data-testid="stButton"] button:not([data-testid="baseButton-primary"]) span,
+                [data-testid="stButton"] button:not([data-testid="baseButton-primary"]) p {
+                    color: #FFFFFF !important;
+                    -webkit-text-fill-color: #FFFFFF !important;
                 }
-                /* Give secondary buttons a visible border */
+                /* Give secondary buttons golden border on dark background */
                 [data-testid="stButton"] button:not([data-testid="baseButton-primary"]) {
                     border: 2px solid #D4A84B !important;
-                    background-color: #ffffff !important;
+                    background-color: #1a1a2e !important;
+                }
+                [data-testid="stButton"] button:not([data-testid="baseButton-primary"]):hover {
+                    background-color: #2a2a4e !important;
+                    border-color: #f1c40f !important;
                 }
                 </style>
                 """, unsafe_allow_html=True)
@@ -9347,7 +9801,7 @@ EUR{amount_to_pay:.2f}
                 col_save, col_contract, col_invoice = st.columns(3)
                 
                 with col_save:
-                    if st.button("💾 Speichern", key="chk_pref_save", use_container_width=True, type="primary"):
+                    if st.button(f"💾 {t('buttons.save')}", key="chk_pref_save", use_container_width=True, type="primary"):
                         try:
                             # تحديث بيانات التحليل لتشمل خطة التقسيط
                             current_analysis = car_data.get('analysis', {})
@@ -9371,7 +9825,7 @@ EUR{amount_to_pay:.2f}
                             st.error(f"❌ {e}")
 
                 with col_contract:
-                    if st.button("📄 Vertrag", key="chk_pref_contract", use_container_width=True):
+                    if st.button(f"📄 {t('admin.contract')}", key="chk_pref_contract", use_container_width=True):
                          try:
                              # تحديد قيم الأقساط من البيانات المحفوظة أو المحددة
                              if saved_prefs and payment_method_locked:
@@ -9409,7 +9863,7 @@ EUR{amount_to_pay:.2f}
                              }
                              gen = InvoiceGenerator()
                              # استخدام بيانات المستخدم الحالية
-                             c_path = gen.generate_contract('DRAFT', dummy_contract, st.session_state.user)
+                             c_path = gen.generate_contract('DRAFT', dummy_contract, st.session_state.user, st.session_state.get('language', 'de'))
                              st.session_state['chk_draft_contract'] = c_path
                          except Exception as e:
                              st.error(f"❌ {e}")
@@ -9419,7 +9873,7 @@ EUR{amount_to_pay:.2f}
                              st.download_button(f"⬇️ {t('buttons.download')}", f, file_name="Draft_Contract.pdf", key="dl_chk_contract", use_container_width=True)
 
                 with col_invoice:
-                    if st.button("🧾 Rechnung", key="chk_pref_invoice", use_container_width=True):
+                    if st.button(f"🧾 {t('admin.invoice')}", key="chk_pref_invoice", use_container_width=True):
                          try:
                              # استخدام مولد فواتير الأقساط
                              from utils import InstallmentInvoiceGenerator
@@ -9545,7 +9999,7 @@ EUR{amount_to_pay:.2f}
                                     user_full_data = st.session_state.user
                                 
                                 # توليد PDF
-                                contract_pdf_path = gen.generate_contract(contract_id, contract_pdf_data, user_full_data)
+                                contract_pdf_path = gen.generate_contract(contract_id, contract_pdf_data, user_full_data, st.session_state.get('language', 'de'))
                                 st.session_state.last_contract_path = contract_pdf_path
                                 
                             except Exception as e:

@@ -117,11 +117,12 @@ class DatabaseManager:
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )''')
             
-            # إضافة أعمدة جديدة لجدول المعاملات (نوع الوقود، الحالة، اللون)
+            # إضافة أعمدة جديدة لجدول المعاملات (نوع الوقود، الحالة، اللون، نسبة الربح)
             trans_new_columns = [
                 ('fuel_type', 'TEXT'),
                 ('condition', 'TEXT'),
-                ('color', 'TEXT')
+                ('color', 'TEXT'),
+                ('profit_margin', 'REAL')  # نسبة الربح عند البيع
             ]
             for col_name, col_type in trans_new_columns:
                 try:
@@ -272,6 +273,24 @@ class DatabaseManager:
                 except sqlite3.OperationalError:
                     pass  # العمود موجود مسبقاً
 
+            # 8. جدول فواتير الرواتب (Salary Invoices)
+            cursor.execute('''CREATE TABLE IF NOT EXISTS salary_invoices (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id INTEGER NOT NULL,
+                month INTEGER NOT NULL,
+                year INTEGER NOT NULL,
+                gross_salary REAL NOT NULL,
+                feiertags_geld REAL DEFAULT 0,
+                urlaubsgeld REAL DEFAULT 0,
+                deductions REAL DEFAULT 0,
+                tax_amount REAL DEFAULT 0,
+                insurance_amount REAL DEFAULT 0,
+                net_salary REAL NOT NULL,
+                pdf_path TEXT,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (employee_id) REFERENCES employees(id)
+            )''')
 
     # ===== 1. إدارة المستخدمين والأمان =====
     
@@ -363,14 +382,17 @@ class DatabaseManager:
             # سنقوم فقط بتخزين نص يدل على وجود صورة
             image_path = "stored_in_session" 
 
+        # جلب نسبة الربح الحالية لحفظها مع المعاملة
+        current_profit_margin = self.get_setting('company_profit_margin', 0.20)
+
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 INSERT INTO transactions (
                     user_id, car_type, brand, model, manufacture_year, 
                     mileage, estimated_price, condition_analysis, image_path,
-                    fuel_type, condition, color
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    fuel_type, condition, color, profit_margin
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 user_id,
                 car_data.get('car_type', 'Unknown'),
@@ -383,7 +405,8 @@ class DatabaseManager:
                 image_path,
                 car_data.get('fuel_type', ''),
                 car_data.get('condition', ''),
-                car_data.get('color', '')
+                car_data.get('color', ''),
+                float(current_profit_margin)  # نسبة الربح عند البيع
             ))
             return cursor.lastrowid
 
@@ -583,6 +606,93 @@ class DatabaseManager:
             cursor.execute("SELECT DISTINCT strftime('%Y', created_at) as year FROM transactions")
             years = [int(row['year']) for row in cursor.fetchall() if row['year']]
             return sorted(years, reverse=True) if years else [datetime.now().year]
+
+    # ===== 3.0.1 تقارير أرباح الشركة (Company Profit Reports) =====
+
+    def get_monthly_profits(self, year: int) -> List[Dict]:
+        """حساب الأرباح لكل شهر في السنة المحددة (باستخدام نسبة الربح المحفوظة لكل معاملة)"""
+        default_margin = self.get_setting('company_profit_margin', 0.20)
+        monthly_data = []
+        
+        with self.get_connection() as conn:
+            for month in range(1, 13):
+                month_str = f"{month:02d}"
+                # حساب الأرباح باستخدام نسبة الربح المحفوظة لكل معاملة (أو الافتراضية للقديمة)
+                result = conn.execute("""
+                    SELECT 
+                        COUNT(*) as sales_count, 
+                        COALESCE(SUM(estimated_price), 0) as total_sales,
+                        COALESCE(SUM(estimated_price * COALESCE(profit_margin, ?)), 0) as total_profit
+                    FROM transactions 
+                    WHERE strftime('%Y', created_at) = ? AND strftime('%m', created_at) = ?
+                """, (float(default_margin), str(year), month_str)).fetchone()
+                
+                monthly_data.append({
+                    'month': month,
+                    'sales_count': result['sales_count'] or 0,
+                    'total_sales': result['total_sales'] or 0,
+                    'profit': result['total_profit'] or 0
+                })
+        
+        return monthly_data
+
+    def get_quarterly_profits(self, year: int) -> List[Dict]:
+        """حساب الأرباح لكل ربع في السنة (باستخدام نسبة الربح المحفوظة لكل معاملة)"""
+        default_margin = self.get_setting('company_profit_margin', 0.20)
+        quarters = [
+            {'quarter': 1, 'months': ['01', '02', '03'], 'name': 'Q1'},
+            {'quarter': 2, 'months': ['04', '05', '06'], 'name': 'Q2'},
+            {'quarter': 3, 'months': ['07', '08', '09'], 'name': 'Q3'},
+            {'quarter': 4, 'months': ['10', '11', '12'], 'name': 'Q4'}
+        ]
+        
+        quarterly_data = []
+        
+        with self.get_connection() as conn:
+            for q in quarters:
+                placeholders = ','.join(['?' for _ in q['months']])
+                params = [float(default_margin), str(year)] + q['months']
+                
+                result = conn.execute(f"""
+                    SELECT 
+                        COUNT(*) as sales_count, 
+                        COALESCE(SUM(estimated_price), 0) as total_sales,
+                        COALESCE(SUM(estimated_price * COALESCE(profit_margin, ?)), 0) as total_profit
+                    FROM transactions 
+                    WHERE strftime('%Y', created_at) = ? AND strftime('%m', created_at) IN ({placeholders})
+                """, params).fetchone()
+                
+                quarterly_data.append({
+                    'quarter': q['quarter'],
+                    'name': q['name'],
+                    'sales_count': result['sales_count'] or 0,
+                    'total_sales': result['total_sales'] or 0,
+                    'profit': result['total_profit'] or 0
+                })
+        
+        return quarterly_data
+
+    def get_yearly_profit(self, year: int) -> Dict:
+        """حساب إجمالي الربح السنوي (باستخدام نسبة الربح المحفوظة لكل معاملة)"""
+        default_margin = self.get_setting('company_profit_margin', 0.20)
+        
+        with self.get_connection() as conn:
+            result = conn.execute("""
+                SELECT 
+                    COUNT(*) as sales_count, 
+                    COALESCE(SUM(estimated_price), 0) as total_sales,
+                    COALESCE(SUM(estimated_price * COALESCE(profit_margin, ?)), 0) as total_profit
+                FROM transactions 
+                WHERE strftime('%Y', created_at) = ?
+            """, (float(default_margin), str(year))).fetchone()
+            
+            return {
+                'year': year,
+                'sales_count': result['sales_count'] or 0,
+                'total_sales': result['total_sales'] or 0,
+                'profit': result['total_profit'] or 0,
+                'profit_margin': float(default_margin)  # النسبة الحالية للعرض
+            }
 
     # ===== 3.1 إدارة الموظفين (Employee Management) =====
 
@@ -836,12 +946,13 @@ class DatabaseManager:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
-            # 1. إنشاء سجل في جدول transactions (للتوافق القديم)
+            # 1. إنشاء سجل في جدول transactions (للتوافق القديم) مع جميع بيانات السيارة
             cursor.execute('''
                 INSERT INTO transactions (
                     user_id, car_type, brand, model, manufacture_year, 
-                    mileage, estimated_price, condition_analysis
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    mileage, estimated_price, condition_analysis,
+                    fuel_type, condition, color, image_path
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 user_id,
                 car_data.get('car_type', 'Unknown'),
@@ -850,7 +961,11 @@ class DatabaseManager:
                 car_data.get('manufacture_year', 2020),
                 car_data.get('mileage', 0),
                 total_amount,
-                json.dumps(kwargs, ensure_ascii=False)
+                json.dumps(kwargs, ensure_ascii=False),
+                car_data.get('fuel_type', ''),
+                car_data.get('condition', car_data.get('condition_analysis', '')),
+                car_data.get('color', ''),
+                car_data.get('image_path', '')
             ))
             transaction_id = cursor.lastrowid
             
@@ -864,18 +979,23 @@ class DatabaseManager:
             
             remaining = total_amount - down_payment
             
+            # إضافة VIN ورقم اللوحة
+            vehicle_vin = car_data.get('vehicle_vin', car_data.get('vin', ''))
+            vehicle_plate = car_data.get('vehicle_plate', car_data.get('plate', ''))
+            
             cursor.execute('''
                 INSERT INTO contracts (
                     user_id, transaction_id, total_price, down_payment,
                     remaining_amount, installment_count, monthly_installment,
                     interest_rate, payment_due_day, grace_period_days,
-                    vehicle_type, vehicle_model, status, car_details
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
+                    vehicle_type, vehicle_model, vehicle_vin, vehicle_plate, status, car_details
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
             ''', (
                 user_id, transaction_id, total_amount, down_payment,
                 remaining, installment_count, monthly_amount,
                 interest_rate, payment_due_day, grace_period,
                 car_data.get('brand', ''), car_data.get('model', ''),
+                vehicle_vin, vehicle_plate,
                 json.dumps(car_data, ensure_ascii=False)
             ))
             contract_id = cursor.lastrowid
@@ -907,6 +1027,7 @@ class DatabaseManager:
                     ))
             
             return contract_id
+
 
     def add_payment(self, contract_id: int, amount: float, method: str, proof_path: str, ref: str) -> int:
         """إضافة دفعة جديدة في جدول payments"""
@@ -1168,3 +1289,81 @@ class DatabaseManager:
                 'remaining_amount': remaining_amount,
                 'monthly_amount': monthly_amount
             }
+
+    # ===== إدارة فواتير الرواتب (Salary Invoices) =====
+    
+    def get_active_employees_for_payroll(self) -> List[Dict]:
+        """جلب الموظفين النشطين مع بيانات الرواتب للدفع الشهري"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, first_name, last_name, email, phone, job_title,
+                       monthly_salary, feiertags_geld, urlaubsgeld, is_active
+                FROM employees 
+                WHERE is_active = 1 AND monthly_salary > 0
+                ORDER BY first_name, last_name
+            ''')
+            return [dict(row) for row in cursor.fetchall()]
+    
+    def create_salary_invoice(self, employee_id: int, month: int, year: int,
+                              gross_salary: float, net_salary: float,
+                              feiertags_geld: float = 0, urlaubsgeld: float = 0,
+                              deductions: float = 0, tax_amount: float = 0,
+                              insurance_amount: float = 0, pdf_path: str = None,
+                              notes: str = None) -> int:
+        """إنشاء فاتورة راتب جديدة"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO salary_invoices 
+                (employee_id, month, year, gross_salary, feiertags_geld, urlaubsgeld,
+                 deductions, tax_amount, insurance_amount, net_salary, pdf_path, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (employee_id, month, year, gross_salary, feiertags_geld, urlaubsgeld,
+                  deductions, tax_amount, insurance_amount, net_salary, pdf_path, notes))
+            return cursor.lastrowid
+    
+    def get_salary_invoices_by_month(self, year: int, month: int) -> List[Dict]:
+        """جلب جميع فواتير الرواتب لشهر معين"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT si.*, e.first_name, e.last_name, e.job_title, e.email
+                FROM salary_invoices si
+                JOIN employees e ON si.employee_id = e.id
+                WHERE si.year = ? AND si.month = ?
+                ORDER BY e.first_name, e.last_name
+            ''', (year, month))
+            return [dict(row) for row in cursor.fetchall()]
+    
+    def get_employee_salary_history(self, employee_id: int, limit: int = 12) -> List[Dict]:
+        """جلب سجل رواتب موظف معين"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM salary_invoices 
+                WHERE employee_id = ?
+                ORDER BY year DESC, month DESC
+                LIMIT ?
+            ''', (employee_id, limit))
+            return [dict(row) for row in cursor.fetchall()]
+    
+    def update_salary_invoice_pdf(self, invoice_id: int, pdf_path: str) -> bool:
+        """تحديث مسار ملف PDF لفاتورة الراتب"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE salary_invoices SET pdf_path = ? WHERE id = ?
+            ''', (pdf_path, invoice_id))
+            return cursor.rowcount > 0
+    
+    def salary_invoice_exists(self, employee_id: int, year: int, month: int) -> bool:
+        """التحقق من وجود فاتورة راتب لموظف في شهر معين"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id FROM salary_invoices 
+                WHERE employee_id = ? AND year = ? AND month = ?
+            ''', (employee_id, year, month))
+            return cursor.fetchone() is not None
+

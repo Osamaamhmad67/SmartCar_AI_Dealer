@@ -1,12 +1,23 @@
-# Byte-compiled / optimized / DLL files
+# SmartCar AI Dealer - Git Ignore
+
+# ===== ملفات البيئة والأسرار =====
+.env
+.env.local
+.env.production
+*.pem
+secrets/
+
+# ===== قواعد البيانات =====
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+
+# ===== Python =====
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -20,43 +31,44 @@ parts/
 sdist/
 var/
 wheels/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
-
-# Environments
-.env
-.venv
 venv/
 ENV/
-env.bak/
-venv.bak/
+env/
+.venv/
 
-# Project specific (Generated Files)
-.cache/
-backups/
-invoices/*.pdf
-logs/*.log
+# ===== IDE =====
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# ===== الملفات المؤقتة =====
 *.log
+*.tmp
+*.temp
+temp/
+tmp/
+logs/
 
-# Databases
-*.db
-*.sqlite3
+# ===== الفواتير والملفات المُنشأة =====
+invoices/*.pdf
+contracts/*.pdf
+exports/
 
-# Uploads and User Data
-uploads/*
-!uploads/.gitkeep
+# ===== Streamlit =====
+.streamlit/secrets.toml
 
-# Streamlit configuration
-.streamlit/config.toml
-
-# OS generated files
+# ===== نظام التشغيل =====
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
+desktop.ini
+
+# ===== Gemini/AI =====
+.gemini/
