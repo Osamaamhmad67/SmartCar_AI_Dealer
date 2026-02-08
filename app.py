@@ -5555,6 +5555,7 @@ def home_page():
             lang = get_current_lang()
             
             # تنبيه نهاية الشهر
+            from datetime import datetime
             today = datetime.now()
             days_in_month = calendar.monthrange(today.year, today.month)[1]
             if today.day >= days_in_month - 2:
