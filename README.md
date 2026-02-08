@@ -115,13 +115,15 @@ SmartCar_AI_Dealer/
 
 ---
 
-## 📸 لقطات الشاشة
+## 📸 Screenshots
 
 <div align="center">
 
-| لوحة التحكم | تحليل السيارة | تقارير الأرباح |
-|-------------|---------------|----------------|
-| ![Dashboard](screenshots/dashboard.png) | ![Analysis](screenshots/analysis.png) | ![Reports](screenshots/reports.png) |
+### 🏠 Home Page / الصفحة الرئيسية
+![Home Page](screenshots/home.png)
+
+### 🤖 AI Car Analysis / تحليل السيارة بالذكاء الاصطناعي
+![AI Analysis](screenshots/analysis.png)
 
 </div>
 
