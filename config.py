@@ -39,7 +39,7 @@ class Config:
     
     # ===== 3. الذكاء الاصطناعي (Groq) =====
     GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.2-11b-vision-preview")
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
     
     # ===== 4. نظام البريد الإلكتروني =====
     SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")

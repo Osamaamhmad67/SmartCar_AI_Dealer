@@ -61,10 +61,10 @@ primaryColor = "#D4AF37"
 # ═══════════════════════════════════════════════════════════════════════════
 [server]
 # Allow access from any device on the network
-address = "0.0.0.0"
+address = "localhost"
 port = 8501
 # Disable XSRF for network access (required for mobile devices)
 enableCORS = false
 enableXsrfProtection = false
 maxUploadSize = 200
-headless = true
+headless = false

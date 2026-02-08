@@ -503,7 +503,7 @@ def render_universal_header(page_title: str, subtitle: str = ""):
         subtitle: Optional subtitle to display below the title
     """
     # Load logo
-    header_logo_path = r"C:\Users\Osama\Desktop\SmartCar_AI_Dealer2\logs\osamaslogo.png"
+    header_logo_path = r"C:\Users\Osama\Desktop\SmartCar_AI_Dealer\logs\osamaslogo.png"
     header_logo_img = ""
     if os.path.exists(header_logo_path):
         with open(header_logo_path, "rb") as image_file:
@@ -1048,7 +1048,7 @@ def get_predict_subheader_html(logo_b64):
     <body>
         <div class="main-wrapper">
             <div class="title-bar">
-                🚗 {t('predict.title')}
+                🏎️ {t('predict.title')}
             </div>
             <div class="container">
                 <div class="text-section">
@@ -1619,7 +1619,7 @@ def get_results_page_html(estimated_price, price_range, confidence, confidence_p
                 
                 <div class="details-grid">
                     <div>
-                        <div class="section-title">🚗 {t('predict.step2_title')}</div>
+                        <div class="section-title">🏎️ {t('predict.step2_title')}</div>
                         <div class="detail-row"><span class="detail-label">{t('predict.car_type')}:</span> <span class="detail-val">{car_data.get('car_type', '-')}</span></div>
                         <div class="detail-row"><span class="detail-label">{t('predict.model')}:</span> <span class="detail-val">{car_data.get('brand', '-')} {car_data.get('model', '')}</span></div>
                         <div class="detail-row"><span class="detail-label">{t('predict.year')}:</span> <span class="detail-val">{car_data.get('manufacture_year', '-')}</span></div>
@@ -2415,7 +2415,7 @@ from utils.cache_manager import CacheManager
 
 st.set_page_config(
     page_title="SmartCar AI-Dealer",
-    page_icon="🚗",
+    page_icon="🏎️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -2444,7 +2444,7 @@ if current_page != st.session_state.last_page_for_scroll or should_scroll:
 def load_custom_css():
     """تحميل أنماط CSS مخصصة والعلامة المائية - نظام التصميم المحسّن"""
     # تحويل اللوغو إلى Base64 للعلامة المائية
-    logo_path = r"C:\Users\Osama\Desktop\SmartCar_AI_Dealer2\logs\logo.png"
+    logo_path = r"C:\Users\Osama\Desktop\SmartCar_AI_Dealer\logs\logo.png"
     logo_base64 = ""
     if os.path.exists(logo_path):
         with open(logo_path, "rb") as f:
@@ -3781,7 +3781,7 @@ def init_session_state():
     
     # تحميل اللوغو مرة واحدة
     if not st.session_state.get('logo_base64'):
-        logo_path = r"C:\Users\Osama\Desktop\SmartCar_AI_Dealer2\logs\logo.png"
+        logo_path = r"C:\Users\Osama\Desktop\SmartCar_AI_Dealer\logs\logo.png"
         if os.path.exists(logo_path):
             with open(logo_path, "rb") as f:
                 st.session_state.logo_base64 = base64.b64encode(f.read()).decode()
@@ -3820,6 +3820,17 @@ def logout():
 
 def login_page():
     """صفحة تسجيل الدخول"""
+    
+    # إخفاء القائمة الجانبية في صفحة تسجيل الدخول
+    st.markdown("""
+    <style>
+        [data-testid="stSidebar"] {display: none !important;}
+        [data-testid="stSidebarNav"] {display: none !important;}
+        section[data-testid="stSidebar"] {display: none !important;}
+        .css-1d391kg {display: none !important;}
+        button[kind="header"] {display: none !important;}
+    </style>
+    """, unsafe_allow_html=True)
 
     # Render the universal header with welcome message
     render_universal_header("Welcome to SmartCar!", "✨ AI-Powered Dealer Solution")
@@ -3894,6 +3905,35 @@ def login_page():
                         st.session_state.page = 'home'
                         st.session_state['language'] = current_lang
                         st.session_state['gdpr_accepted'] = True  # حفظ موافقة GDPR
+                        
+                        # إنشاء ملف JSON للعميل
+                        try:
+                            import json
+                            import os
+                            from datetime import datetime
+                            
+                            customers_dir = os.path.join(os.path.dirname(__file__), 'customers')
+                            os.makedirs(customers_dir, exist_ok=True)
+                            
+                            # اسم الملف = اسم المستخدم
+                            customer_filename = f"{user_data.get('username', 'unknown')}.json"
+                            customer_filepath = os.path.join(customers_dir, customer_filename)
+                            
+                            # بيانات العميل الأساسية
+                            customer_data = {
+                                "language": current_lang,
+                                "full_name": user_data.get('full_name', ''),
+                                "email": user_data.get('email', ''),
+                                "last_login": datetime.now().isoformat(),
+                                # سيتم إضافة المزيد لاحقاً
+                            }
+                            
+                            # حفظ الملف
+                            with open(customer_filepath, 'w', encoding='utf-8') as f:
+                                json.dump(customer_data, f, ensure_ascii=False, indent=4)
+                        except Exception as e:
+                            pass  # لا نوقف تسجيل الدخول بسبب خطأ في الملف
+                        
                         st.success(f"✅ {t('messages.success')}")
                         st.rerun()
                     else:
@@ -4704,20 +4744,29 @@ def home_page():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # اختيار طريقة الإدخال
+                # اختيار طريقة الإدخال - عنوان مرئي
+                st.markdown(f"""
+                <p style="color: #D4AF37; font-size: 1.1rem; font-weight: bold; margin-bottom: 10px;">
+                    📋 {t('admin.select_method') if t('admin.select_method') else 'Select Method'}
+                </p>
+                """, unsafe_allow_html=True)
+                
                 input_method = st.radio(
-                    t('admin.select_method') if t('admin.select_method') else "Select Method",
+                    "",  # العنوان فارغ لأننا أضفناه أعلاه
                     [f"📷 {t('admin.camera') if t('admin.camera') else 'Camera'}", 
                      f"📁 {t('admin.upload_image') if t('admin.upload_image') else 'Upload Image'}",
                      f"⌨️ {t('admin.manual_code') if t('admin.manual_code') else 'Manual Code'}"],
-                    horizontal=True
+                    horizontal=True,
+                    label_visibility="collapsed"
                 )
                 
                 qr_code_value = None
                 
                 if "Camera" in input_method or "الكاميرا" in input_method:
-                    # استخدام كاميرا المتصفح
-                    captured_image = st.camera_input(t('admin.capture_qr') if t('admin.capture_qr') else "Capture QR Code")
+                    # استخدام كاميرا المتصفح - تصغير الحجم
+                    cam_col1, cam_col2, cam_col3 = st.columns([3, 2, 3])  # 25% في الوسط
+                    with cam_col2:
+                        captured_image = st.camera_input(t('admin.capture_qr') if t('admin.capture_qr') else "📸 QR")
                     
                     if captured_image:
                         try:
@@ -5714,7 +5763,7 @@ def home_page():
         elif admin_menu == t('admin.transactions'):
             st.subheader(f"💼 {t('admin.contracts_header')}")
             
-            tab1, tab2 = rtl_tabs([f"💰 {t('admin.tab_contracts')}", f"🚗 {t('admin.tab_estimates')}"])
+            tab1, tab2 = rtl_tabs([f"💰 {t('admin.tab_contracts')}", f"🏎️ {t('admin.tab_estimates')}"])
             
             with tab1:
                 st.markdown(f"""
@@ -5736,7 +5785,7 @@ def home_page():
                                 <span style='color: #FFFFFF; font-size: 1.1em;'>{c.get('full_name', '-')}</span><br>
                                 <span style='color: #a0a0c0;'>📧 {c.get('email', '-')} | 📱 {c.get('phone', '-')}</span><br>
                                 <span style='color: #a0a0c0;'>🪪 {t('profile.id_number')}: {c.get('id_number', '-')} | 🌍 {c.get('nationality', '-')}</span><br>
-                                <span style='color: #a0a0c0;'>🚗 {t('profile.license_number')}: {c.get('license_number', '-')}</span>
+                                <span style='color: #a0a0c0;'>🏎️ {t('profile.license_number')}: {c.get('license_number', '-')}</span>
                             </div>
                             """, unsafe_allow_html=True)
                             
@@ -5760,7 +5809,7 @@ def home_page():
                                 
                                 st.markdown(f"""
                                 <div style='background: rgba(240,180,41,0.1); padding: 12px; border-radius: 8px; margin: 10px 0; border-right: 4px solid #D4AF37;'>
-                                    <b style='color: #D4AF37;'>🚗 {t('checkout.car_summary')}:</b><br>
+                                    <b style='color: #D4AF37;'>🏎️ {t('checkout.car_summary')}:</b><br>
                                     <span style='color: #FFFFFF; font-weight: bold;'>{safe_get(car_info, 'brand')} {safe_get(car_info, 'model', '')} - {safe_get(car_info, 'manufacture_year', safe_get(car_info, 'year', '-'))}</span><br>
                                     <span style='color: #a0a0c0; font-size: 0.9rem;'>
                                         📏 {t('predict.mileage')}: {car_info.get('mileage', 0) or 0:,} km | 
@@ -5786,7 +5835,7 @@ def home_page():
                                 if direct_brand or direct_model:
                                     st.markdown(f"""
                                     <div style='background: rgba(240,180,41,0.1); padding: 12px; border-radius: 8px; margin: 10px 0; border-right: 4px solid #D4AF37;'>
-                                        <b style='color: #D4AF37;'>🚗 {t('checkout.car_summary')}:</b><br>
+                                        <b style='color: #D4AF37;'>🏎️ {t('checkout.car_summary')}:</b><br>
                                         <span style='color: #FFFFFF; font-weight: bold;'>{safe_val(direct_brand)} {safe_val(direct_model, '')} - {safe_val(direct_year)}</span><br>
                                         <span style='color: #a0a0c0; font-size: 0.9rem;'>
                                             📏 {t('predict.mileage')}: {direct_mileage if direct_mileage not in [None, '', '-'] else 0:,} km | 
@@ -5984,20 +6033,7 @@ def home_page():
         </div>
         """, unsafe_allow_html=True)
         
-        # أزرار الإجراءات الرئيسية
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            if st.button(f"🚗 {t('nav.predict')}", use_container_width=True, type="primary"):
-                navigate_to('predict')
-        
-        with col2:
-            if st.button(f"📄 {t('nav.invoices')}", use_container_width=True):
-                navigate_to('invoices')
-        
-        with col3:
-            if st.button(f"👤 {t('nav.profile')}", use_container_width=True):
-                navigate_to('profile')
+        # (الأزرار موجودة في القائمة الجانبية - تمت إزالة التكرار)
         
         st.markdown("---")
         
@@ -6009,7 +6045,7 @@ def home_page():
         
         if user_transactions:
             for trans in user_transactions:
-                with st.expander(f"🚗 {trans.get('brand', '')} {trans.get('model', '')} - €{trans.get('estimated_price', 0):,.2f}"):
+                with st.expander(f"🏎️ {trans.get('brand', '')} {trans.get('model', '')} - €{trans.get('estimated_price', 0):,.2f}"):
                     col1, col2 = st.columns(2)
                     with col1:
                         st.write(f"**{t('admin.car_type')}:** {trans.get('car_type', '-')}")
@@ -6154,7 +6190,7 @@ def predict_page():
     st.session_state.user = fresh_user
 
     # Render universal header
-    render_universal_header(t('nav.predict'), "🚗 " + t('predict.ai_evaluation'))
+    render_universal_header(t('nav.predict'), "🏎️ " + t('predict.ai_evaluation'))
     
     st.markdown("---")
     
@@ -6906,7 +6942,7 @@ def results_page():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button(f"🚗 {t('results.new_evaluation')}", use_container_width=True):
+        if st.button(f"🏎️ {t('results.new_evaluation')}", use_container_width=True):
             # مسح البيانات السابقة
             st.session_state.uploaded_image = None
             st.session_state.car_details = {}
@@ -6979,7 +7015,7 @@ def invoices_page():
             selected_user = user_options.get(selected_user_key)
             
             if selected_user:
-                ocr_tab1, ocr_tab2, ocr_tab3 = rtl_tabs([f"🪪 {t('ocr.id_card_tab')}", f"🚗 {t('ocr.driver_license_tab')}", f"📋 {t('ocr.previous_transactions_tab')}"])
+                ocr_tab1, ocr_tab2, ocr_tab3 = rtl_tabs([f"🪪 {t('ocr.id_card_tab')}", f"🏎️ {t('ocr.driver_license_tab')}", f"📋 {t('ocr.previous_transactions_tab')}"])
                 
                 with ocr_tab1:
                     st.write(f"**📄 {t('ocr.front_side')}**")
@@ -7073,7 +7109,7 @@ def invoices_page():
                         st.info(f"📊 {t('ocr.transactions_count')}: {len(user_trans)}")
                         
                         for ut in user_trans:
-                            with st.expander(f"🚗 {ut.get('brand', '')} {ut.get('model', '')} - €{ut.get('estimated_price', 0):,.0f}"):
+                            with st.expander(f"🏎️ {ut.get('brand', '')} {ut.get('model', '')} - €{ut.get('estimated_price', 0):,.0f}"):
                                 # وضع التعديل
                                 edit_key = f"edit_trans_{ut['id']}"
                                 
@@ -7172,7 +7208,7 @@ def invoices_page():
                 st.info(f"📊 {t('invoices.total_transactions', 'Total transactions')}: {len(user_transactions)}")
                 
                 for trans in user_transactions:
-                    with st.expander(f"🚗 {trans.get('brand', '')} {trans.get('model', '')} - €{trans.get('estimated_price', 0):,.2f} ({str(trans.get('created_at', ''))[:10]})"):
+                    with st.expander(f"🏎️ {trans.get('brand', '')} {trans.get('model', '')} - €{trans.get('estimated_price', 0):,.2f} ({str(trans.get('created_at', ''))[:10]})"):
                         col1, col2 = st.columns(2)
                         with col1:
                             st.write(f"**{t('admin.car_type')}:** {trans.get('car_type', '-')}")
@@ -7206,7 +7242,7 @@ def invoices_page():
             else:
                 st.info(t('invoices.no_transactions_yet', 'You have no previous transactions. Start by evaluating your car!'))
                 
-                if st.button(f"🚗 {t('nav.predict')}", type="primary"):
+                if st.button(f"🏎️ {t('nav.predict')}", type="primary"):
                     navigate_to('predict')
                 
     except Exception as e:
@@ -7327,7 +7363,7 @@ def profile_page():
         if st.session_state.get('edit_mode') == 'auto':
             st.info(f"📷 **{t('profile.auto_edit_mode')}**")
             
-            auto_tab1, auto_tab2 = rtl_tabs([f"🪪 {t('profile.id_card_full')}", f"🚗 {t('profile.driver_license_full')}"])
+            auto_tab1, auto_tab2 = rtl_tabs([f"🪪 {t('profile.id_card_full')}", f"🏎️ {t('profile.driver_license_full')}"])
             
             with auto_tab1:
                 # الوجه الأمامي والخلفي جنباً إلى جنب
@@ -7449,7 +7485,7 @@ def profile_page():
     <tr class="section-header"><td colspan="2">🏠 {t('profile.address_header')}</td></tr>
     <tr><td>{t('profile.address')}</td><td>{full_address}</td></tr>
     
-    <tr class="section-header"><td colspan="2">🚗 {t('profile.license_header')}</td></tr>
+    <tr class="section-header"><td colspan="2">🏎️ {t('profile.license_header')}</td></tr>
     <tr><td>{t('profile.lic_no')}</td><td>{user.get('license_number') or '-'}</td></tr>
     <tr><td>{t('profile.lic_type')}</td><td>{user.get('license_type') or '-'}</td></tr>
     <tr><td>{t('profile.lic_class')}</td><td>{user.get('license_class') or '-'}</td></tr>
@@ -7517,7 +7553,7 @@ def profile_page():
                     st.markdown("---")
                     
                     # بيانات رخصة القيادة
-                    st.write(f"**🚗 {t('profile.driver_license_full')}:**")
+                    st.write(f"**🏎️ {t('profile.driver_license_full')}:**")
                     lic_col1, lic_col2 = st.columns(2)
                     
                     with lic_col1:
@@ -7637,11 +7673,11 @@ def profile_page():
     
     # الأدمن لا يحتاج تبويب العقود والتقديرات (لأن معاملاته محفوظة باسم العملاء)
     if user.get('role') == 'admin':
-        doc_tab1, doc_tab2 = rtl_tabs([f"🪪 {t('profile.id_card', 'ID Card')}", f"🚗 {t('profile.driver_license', 'Driver License')}"])
+        doc_tab1, doc_tab2 = rtl_tabs([f"🪪 {t('profile.id_card', 'ID Card')}", f"🏎️ {t('profile.driver_license', 'Driver License')}"])
         contracts_tab = None
         est_tab = None
     else:
-        doc_tab1, doc_tab2, contracts_tab, est_tab = rtl_tabs([f"🪪 {t('profile.id_card', 'ID Card')}", f"🚗 {t('profile.driver_license', 'Driver License')}", f"📜 {t('profile.contracts', 'Contracts & Invoices')}", f"🚗 {t('profile.recent_estimates', 'Recent Estimates')}"])
+        doc_tab1, doc_tab2, contracts_tab, est_tab = rtl_tabs([f"🪪 {t('profile.id_card', 'ID Card')}", f"🏎️ {t('profile.driver_license', 'Driver License')}", f"📜 {t('profile.contracts', 'Contracts & Invoices')}", f"🏎️ {t('profile.recent_estimates', 'Recent Estimates')}"])
     
     if est_tab:
         st.subheader(f"📋 {t('profile.recent_estimates', 'Recent Price Estimates')}")
@@ -7887,7 +7923,7 @@ def profile_page():
                         with st.expander(f"📌 {t('contracts.contract')} #{contract['id']} - {car_info.get('brand')} {car_info.get('model')} ({str(contract.get('created_at'))[:10]})"):
                             
                             # عرض تفاصيل السيارة داخل العقد
-                            st.markdown(f"**🚗 {t('contracts.car_summary')}:**")
+                            st.markdown(f"**🏎️ {t('contracts.car_summary')}:**")
                             cd_col1, cd_col2, cd_col3, cd_col4 = st.columns(4)
                             with cd_col1:
                                 st.write(f"**{t('predict.brand')}:** {car_info.get('brand', '-')}")
@@ -8442,7 +8478,7 @@ def admin_page():
         st.subheader(f"💼 {t('admin.contracts_header')}")
         
         # Tabs for easier navigation
-        tab1, tab2 = rtl_tabs([f"💰 {t('admin.tab_contracts')}", f"🚗 {t('admin.tab_estimates')}"])
+        tab1, tab2 = rtl_tabs([f"💰 {t('admin.tab_contracts')}", f"🏎️ {t('admin.tab_estimates')}"])
         
         with tab1:
             st.info(t('admin.contracts_desc'))
@@ -8875,7 +8911,7 @@ def admin_page():
                 st.markdown("---")
                 
                 # 2. توزيع العلامات التجارية والأنواع
-                st.subheader(f"🚗 {t('admin.market_preferences')}")
+                st.subheader(f"🏎️ {t('admin.market_preferences')}")
                 
                 pie_col1, pie_col2 = st.columns(2)
                 
@@ -9076,7 +9112,7 @@ def show_about_dialog():
 
 ---
 
-# 🚗 SmartCar AI-Dealer
+# 🏎️ SmartCar AI-Dealer
 ### {t('about.version')}
 
 ---
@@ -9119,7 +9155,7 @@ def show_help_dialog():
     st.markdown(f"""
 ## 📖 {t('help.title')}
 
-### 🚗 {t('help.workflow_title')}
+### 🏎️ {t('help.workflow_title')}
 
 ---
 
@@ -9215,7 +9251,7 @@ def render_sidebar():
                 navigate_to("home")
         
         # Predict button
-        if st.button(f"🚗 {t('nav.predict')}", use_container_width=True, 
+        if st.button(f"🏎️ {t('nav.predict')}", use_container_width=True, 
                     type="primary" if st.session_state.page == "predict" else "secondary"):
             navigate_to("predict")
         
@@ -9289,7 +9325,7 @@ def verify_identity_page():
     
     # نتحقق من وجود البيانات في السيشن أو قاعدة البيانات
     is_id_verified = bool(user.get('id_number') and user.get('nationality'))
-    is_license_verified = bool(user.get('license_number') and user.get('license_expiry'))
+    is_license_verified = bool(user.get('license_number'))
     
     # إذا كان كلاهما موثق، نظهر رسالة ونزر للمتابعة
     if is_id_verified and is_license_verified:
@@ -9300,7 +9336,7 @@ def verify_identity_page():
 
     from utils import DocumentScanner
     
-    tab1, tab2 = rtl_tabs([f"🪪 {t('profile.id_card', 'ID Card')}", f"🚗 {t('profile.driver_license', 'Driver License')}"])
+    tab1, tab2 = rtl_tabs([f"🪪 {t('profile.id_card', 'ID Card')}", f"🏎️ {t('profile.driver_license', 'Driver License')}"])
     
     # === تبويب البطاقة الشخصية ===
     with tab1:
@@ -9396,11 +9432,29 @@ def verify_identity_page():
                                 del st.session_state.scanned_id_data
                                 st.rerun()
                     else:
-                        st.error("❌ لم يتم التعرف على البيانات بوضوح. حاول مرة أخرى بصورة أوضح.")
-                        if st.button(f"🔄 {t('admin.retry')}", key="retry_id_fail"):
-                            if 'scanned_id_data' in st.session_state:
-                                del st.session_state.scanned_id_data
-                            st.rerun()
+                        st.warning("⚠️ لم يتم التعرف على بعض البيانات بوضوح. يمكنك القبول أو إعادة المحاولة.")
+                        col_force, col_retry2 = st.columns(2)
+                        with col_force:
+                            if st.button(f"✅ قبول البيانات المتاحة", key="force_accept_id", type="primary", use_container_width=True):
+                                try:
+                                    save_data = {k: v for k, v in combined.items() if k != 'error'}
+                                    # ضمان وجود قيم أساسية حتى لو غير واضحة
+                                    if not save_data.get('id_number') or save_data.get('id_number') == 'غير واضح':
+                                        save_data['id_number'] = 'PENDING'
+                                    if not save_data.get('nationality') or save_data.get('nationality') == 'غير واضح':
+                                        save_data['nationality'] = 'PENDING'
+                                    db.update_user(user['id'], **save_data)
+                                    st.session_state.user.update(save_data)
+                                    del st.session_state.scanned_id_data
+                                    st.success("✅ تم حفظ البيانات المتاحة!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"خطأ: {e}")
+                        with col_retry2:
+                            if st.button(f"🔄 إعادة المحاولة", key="retry_id_fail", use_container_width=True):
+                                if 'scanned_id_data' in st.session_state:
+                                    del st.session_state.scanned_id_data
+                                st.rerun()
 
 
     # === تبويب رخصة القيادة ===
@@ -9471,7 +9525,7 @@ def verify_identity_page():
                     
                     st.markdown(f"""
                     <div class="license-card">
-                        <h3>🚗 بيانات رخصة القيادة المستخرجة</h3>
+                        <h3>🏎️ بيانات رخصة القيادة المستخرجة</h3>
                         <div class="lic-field"><span class="lic-label">الاسم الكامل:</span><span class="lic-value">{combined.get('full_name', 'غير واضح')}</span></div>
                         <div class="lic-field"><span class="lic-label">رقم الرخصة:</span><span class="lic-value">{combined.get('license_number', 'غير واضح')}</span></div>
                         <div class="lic-field"><span class="lic-label">نوع الرخصة:</span><span class="lic-value">{combined.get('license_type', 'غير واضح')}</span></div>
@@ -9504,20 +9558,56 @@ def verify_identity_page():
                                 del st.session_state.scanned_license_data
                                 st.rerun()
                     else:
-                        st.error("❌ لم يتم التعرف على البيانات بوضوح.")
-                        if st.button(f"🔄 {t('admin.retry')}", key="retry_lic_fail"):
-                            if 'scanned_license_data' in st.session_state:
-                                del st.session_state.scanned_license_data
-                            st.rerun()
+                        st.warning("⚠️ لم يتم التعرف على بعض البيانات بوضوح. يمكنك القبول أو إعادة المحاولة.")
+                        col_force, col_retry2 = st.columns(2)
+                        with col_force:
+                            if st.button(f"✅ قبول البيانات المتاحة", key="force_accept_lic", type="primary", use_container_width=True):
+                                try:
+                                    save_data = {
+                                        'license_number': combined.get('license_number', 'PENDING'),
+                                        'license_type': combined.get('license_type', 'PENDING'),
+                                        'license_expiry': combined.get('expiry_date', 'PENDING')
+                                    }
+                                    db.update_user(user['id'], **save_data)
+                                    st.session_state.user.update(save_data)
+                                    del st.session_state.scanned_license_data
+                                    st.success("✅ تم حفظ البيانات المتاحة!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"خطأ: {e}")
+                        with col_retry2:
+                            if st.button(f"🔄 إعادة المحاولة", key="retry_lic_fail", use_container_width=True):
+                                if 'scanned_license_data' in st.session_state:
+                                    del st.session_state.scanned_license_data
+                                st.rerun()
                              
     st.markdown("---")
-    if is_id_verified and is_license_verified:
-        if st.button(f"{t('admin.continue_to_payment')} ➡️", type="primary", use_container_width=True):
+    
+    # تحقق حي من حالة التوثيق (يشمل البيانات المحفوظة حديثاً)
+    current_user = st.session_state.user
+    id_done = bool(current_user.get('id_number') and current_user.get('nationality'))
+    lic_done = bool(current_user.get('license_number'))
+    
+    if id_done and lic_done:
+        st.success("✅ تم التحقق من الهوية والرخصة بنجاح!")
+        if st.button(f"➡️ {t('admin.continue_to_payment', 'متابعة إلى الدفع')} 💳", type="primary", use_container_width=True, key="btn_continue_verified"):
             navigate_to('checkout')
     else:
-        st.warning(f"⚠️ {t('admin.complete_id_license')}")
-        st.caption(f"💡 {t('admin.edit_later_hint')}")
-        if st.button(f"⏭️ {t('admin.skip_this_step')}", key="skip_verification", use_container_width=True):
+        # إظهار حالة كل خطوة
+        col_status1, col_status2 = st.columns(2)
+        with col_status1:
+            if id_done:
+                st.success("✅ الهوية: تم التحقق")
+            else:
+                st.warning("⏳ الهوية: لم يتم التحقق")
+        with col_status2:
+            if lic_done:
+                st.success("✅ الرخصة: تم التحقق")
+            else:
+                st.warning("⏳ الرخصة: لم يتم التحقق")
+        
+        st.caption(f"💡 {t('admin.edit_later_hint', 'يمكنك تعديل بياناتك لاحقاً من ملفك الشخصي')}")
+        if st.button(f"➡️ متابعة", type="primary", use_container_width=True, key="btn_continue_anyway"):
             navigate_to('checkout')
 
 
@@ -9687,13 +9777,13 @@ def checkout_page():
             if st.button(f"📋 {t('nav.invoices')}", use_container_width=True):
                 navigate_to('invoices')
         with col2:
-            if st.button(f"🚗 {t('nav.predict')}", use_container_width=True, type="primary"):
+            if st.button(f"🏎️ {t('nav.predict')}", use_container_width=True, type="primary"):
                 navigate_to('predict')
         return
     
     if not estimated_price or estimated_price <= 0:
         st.warning(f"⚠️ {t('messages.error')}: {t('admin.invalid_price')}")
-        if st.button(f"🚗 {t('nav.predict')}", type="primary"):
+        if st.button(f"🏎️ {t('nav.predict')}", type="primary"):
             navigate_to('predict')
         return
     
@@ -9702,7 +9792,7 @@ def checkout_page():
     # تفاصيل السيارة (ملخص) - Styled Card
     st.markdown(f"""
     <div class="checkout-card">
-        <h3 style="margin-top:0;">🚗 {t('checkout.car_summary')}</h3>
+        <h3 style="margin-top:0;">🏎️ {t('checkout.car_summary')}</h3>
         <p style="font-size: 1.1rem;">
             {car_data.get('brand')} {car_data.get('model')} - {car_data.get('manufacture_year')}
         </p>
@@ -9729,7 +9819,7 @@ def checkout_page():
         )
     with plate_col:
         vehicle_plate = st.text_input(
-            f"🚗 {t('checkout.plate_label', 'Plate Number')}",
+            f"🏎️ {t('checkout.plate_label', 'Plate Number')}",
             value=car_data.get('plate', car_data.get('vehicle_plate', '')),
             placeholder="B-AB 1234",
             key="checkout_plate_input"

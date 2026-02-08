@@ -46,8 +46,7 @@ class DocumentScanner(GroqBaseClient):
                         ],
                     }
                 ],
-                # نطلب من النموذج الالتزام بتنسيق JSON
-                response_format={"type": "json_object"}
+                # الالتزام بتنسيق JSON عبر البرومبت
             )
 
             content = response.choices[0].message.content
@@ -93,8 +92,7 @@ class DocumentScanner(GroqBaseClient):
                         {"type": "text", "text": prompt},
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{self._encode_image(image_bytes)}"}}
                     ]
-                }],
-                response_format={"type": "json_object"}
+                }]
             )
             return self._parse_json_response(response.choices[0].message.content)
         except Exception as e:
@@ -126,8 +124,7 @@ class DocumentScanner(GroqBaseClient):
                         {"type": "text", "text": prompt},
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{self._encode_image(image_bytes)}"}}
                     ]
-                }],
-                response_format={"type": "json_object"}
+                }]
             )
             return self._parse_json_response(response.choices[0].message.content)
         except Exception as e:

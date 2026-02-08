@@ -85,7 +85,6 @@ class CarAIClient(GroqBaseClient):
                     }
                 ],
                 # تفعيل نمط JSON لضمان استقرار استخراج البيانات
-                response_format={"type": "json_object"},
                 temperature=0.1 # درجة حرارة منخفضة جداً لضمان دقة أكبر
             )
 
@@ -158,7 +157,6 @@ class CarAIClient(GroqBaseClient):
                         ],
                     }
                 ],
-                response_format={"type": "json_object"},
                 temperature=0.0,
                 max_tokens=50
             )
@@ -225,7 +223,6 @@ class CarAIClient(GroqBaseClient):
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": messages_content}],
-                response_format={"type": "json_object"},
                 temperature=0.3
             )
 

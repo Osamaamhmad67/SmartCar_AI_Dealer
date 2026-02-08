@@ -23,3 +23,13 @@ qrcode>=7.4.0
 # --- مسح QR Code (QR Scanning) ---
 opencv-python>=4.8.0
 pyzbar>=0.1.9
+
+# --- دعم النص العربي في PDF (Arabic PDF Support) ---
+arabic-reshaper>=3.0.0
+python-bidi>=0.6.0
+
+# --- مكونات Streamlit إضافية (Streamlit Components) ---
+streamlit-scroll-to-top>=0.0.5
+
+# --- أدوات التاريخ (Date Utilities) ---
+python-dateutil>=2.8.0

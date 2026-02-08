@@ -372,7 +372,7 @@ class InvoiceGenerator:
         ]
         
         for label, value in customer_fields:
-            pdf.cell(60, 6, f"{label}:", border=0)
+            pdf.cell(60, 6, fix_arabic(f"{label}:"), border=0)
             pdf.cell(0, 6, fix_arabic(str(value) if value else 'N/A'), border=0, ln=True)
         
         pdf.ln(5)
@@ -419,7 +419,7 @@ class InvoiceGenerator:
         ]
         
         for label, value in vehicle_fields:
-            pdf.cell(60, 6, f"{label}:", border=0)
+            pdf.cell(60, 6, fix_arabic(f"{label}:"), border=0)
             val_str = fix_arabic(str(value) if value else 'N/A')
             if len(str(val_str)) > 50:
                 val_str = str(val_str)[:47] + "..."
@@ -487,9 +487,9 @@ class InvoiceGenerator:
             ])
         
         for label, value in financial_fields:
-            pdf.cell(80, 6, f"{fix_arabic(label)}:", border=0)
+            pdf.cell(80, 6, fix_arabic(f"{label}:"), border=0)
             pdf.set_font(font_name, 'B', 11)
-            pdf.cell(0, 6, str(value), border=0, ln=True)
+            pdf.cell(0, 6, fix_arabic(str(value)), border=0, ln=True)
             pdf.set_font(font_name, '', 11)
         
         # Get user's language for proper text direction (needed for signatures)

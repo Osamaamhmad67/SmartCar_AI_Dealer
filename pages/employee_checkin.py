@@ -44,6 +44,16 @@ st.markdown("""
         text-align: center;
         margin: 20px 0;
     }
+    /* تصغير حجم الكاميرا إلى 25% */
+    [data-testid="stCameraInput"] {
+        max-width: 25% !important;
+        margin: 0 auto !important;
+    }
+    [data-testid="stCameraInput"] video,
+    [data-testid="stCameraInput"] img {
+        max-width: 100% !important;
+        border-radius: 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -92,10 +102,12 @@ input_method = st.radio(
 qr_code_value = None
 
 if "Camera" in input_method or "Kamera" in input_method or "الكاميرا" in input_method:
-    # الكاميرا
-    captured_image = st.camera_input(
-        t('admin.capture_qr') if t('admin.capture_qr') != 'admin.capture_qr' else "📸 Capture your QR Code"
-    )
+    # الكاميرا - تصغير الحجم باستخدام الأعمدة
+    col1, col2, col3 = st.columns([3, 2, 3])  # 25% في الوسط
+    with col2:
+        captured_image = st.camera_input(
+            t('admin.capture_qr') if t('admin.capture_qr') != 'admin.capture_qr' else "📸 QR"
+        )
     
     if captured_image:
         try:
