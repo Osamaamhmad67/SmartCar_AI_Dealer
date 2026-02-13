@@ -53,12 +53,12 @@ class Config:
     # ===== 5. محرك التسعير ودعم اللغات (Language Integration) =====
     # مفاتيح ثابتة (Internal Keys) لضمان استقرار الحسابات المالية
     BASE_PRICES = {
-        "sedan": int(os.getenv("BASE_PRICE_SEDAN", "50000")),
-        "suv": int(os.getenv("BASE_PRICE_SUV", "60000")),
-        "coupe": int(os.getenv("BASE_PRICE_COUPE", "55000")),
-        "hybrid": int(os.getenv("BASE_PRICE_HYBRID", "65000")),
-        "electric": int(os.getenv("BASE_PRICE_ELECTRIC", "70000")),
-        "pickup": int(os.getenv("BASE_PRICE_PICKUP", "58000")),
+        "sedan": int(os.getenv("BASE_PRICE_SEDAN", "35000")),
+        "suv": int(os.getenv("BASE_PRICE_SUV", "45000")),
+        "coupe": int(os.getenv("BASE_PRICE_COUPE", "40000")),
+        "hybrid": int(os.getenv("BASE_PRICE_HYBRID", "50000")),
+        "electric": int(os.getenv("BASE_PRICE_ELECTRIC", "55000")),
+        "pickup": int(os.getenv("BASE_PRICE_PICKUP", "42000")),
     }
     
     # خريطة لربط المسميات بلغات مختلفة بالمفاتيح الثابتة أعلاه

@@ -11,8 +11,9 @@ class PricePredictor:
 
     def __init__(self):
         # الأوزان المرجحة المعتمدة في دستور النظام (Weighted Pricing Model)
-        self.w_condition = 0.60  # وزن الحالة الفنية
-        self.w_mileage = 0.25    # وزن الممشى (الاستهلاك الميكانيكي)
+        # معدّلة بناءً على معايير السوق الألماني
+        self.w_condition = 0.50  # وزن الحالة الفنية
+        self.w_mileage = 0.35    # وزن الممشى (الاستهلاك الميكانيكي) - الأهم!
         self.w_age = 0.15        # وزن العمر الزمني
         self.current_year = 2026
 
@@ -33,15 +34,35 @@ class PricePredictor:
         c = float(analysis_data.get('condition_score', 0.8))
 
         # 3. حساب معامل الممشى (Mileage Factor - M)
-        # نفترض أن العمر الافتراضي للممشى المؤثر هو 250,000 كم
+        # معتمد على معايير السوق الألماني (تدريجي)
         mileage = int(analysis_data.get('mileage', 50000))
-        m = max(0.1, 1 - (mileage / 250000))
+        if mileage < 30000:
+            m = 0.95  # سيارة شبه جديدة
+        elif mileage < 60000:
+            m = max(0.65, 1.0 - ((mileage - 30000) / 300000))
+        elif mileage < 120000:
+            m = max(0.40, 0.65 - ((mileage - 60000) * 0.000012))
+        elif mileage < 200000:
+            m = max(0.20, 0.40 - ((mileage - 120000) * 0.000020))
+        else:
+            m = 0.15  # ممشى مرتفع جداً
 
         # 4. حساب معامل العمر (Age Factor - A)
-        # نفترض أن تأثير العمر يضمحل بشكل كبير بعد 15 سنة
+        # معتمد على معايير السوق الألماني (خسارة 25% السنة الأولى، 50% بعد 3 سنوات)
         year = int(analysis_data.get('manufacture_year', self.current_year))
         age = max(0, self.current_year - year)
-        a = max(0.1, 1 - (age / 15))
+        if age == 0:
+            a = 1.0  # سيارة جديدة
+        elif age == 1:
+            a = 0.75  # خسارة 25% في السنة الأولى
+        elif age <= 3:
+            a = max(0.50, 0.75 - ((age - 1) * 0.125))  # 50% بعد 3 سنوات
+        elif age <= 5:
+            a = max(0.35, 0.50 - ((age - 3) * 0.075))  # 35% بعد 5 سنوات
+        elif age <= 10:
+            a = max(0.20, 0.35 - ((age - 5) * 0.03))
+        else:
+            a = max(0.10, 0.20 - ((age - 10) * 0.02))
 
         # 5. حساب معامل الملاك (Owners Factor)
         # خصم 2% لكل مالك إضافي بعد الأول
@@ -62,12 +83,16 @@ class PricePredictor:
         elif tuv_months < 3:
             tuv_factor = 0.97
 
-        # 8. تطبيق المعادلة المرجحة النهائية
+        # 8. حساب معامل نوع الوقود (Fuel Factor)
+        fuel_type = analysis_data.get('fuel_type', 'بنزين')
+        fuel_factor = Config.FUEL_FACTORS.get(fuel_type, 1.0)
+
+        # 9. تطبيق المعادلة المرجحة النهائية
         # حساب العامل المرجح الإجمالي (Weighted Factor)
         weighted_factor = (self.w_condition * c) + (self.w_mileage * m) + (self.w_age * a)
         
-        # السعر النهائي = الأساسي * المرجح * الماركة * الملاك * الصيانة * التوف
-        final_price = base_price * weighted_factor * brand_factor * owner_penalty * maintenance_bonus * tuv_factor
+        # السعر النهائي = الأساسي * المرجح * الماركة * الملاك * الصيانة * التوف * الوقود
+        final_price = base_price * weighted_factor * brand_factor * owner_penalty * maintenance_bonus * tuv_factor * fuel_factor
 
         return round(final_price, 2)
 
