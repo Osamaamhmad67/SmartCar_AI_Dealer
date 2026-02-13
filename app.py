@@ -73,6 +73,9 @@ import time
 import streamlit.components.v1 as components
 from PIL import Image
 from io import BytesIO
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 from utils.invoice_generator import InvoiceGenerator
 from utils.payment_processor import PaymentProcessor
 from utils.ocr_scanner import DocumentScanner
@@ -8130,6 +8133,75 @@ def admin_page():
         # تنسيق احترافي للإحصائيات
         # تنسيق احترافي للإحصائيات (Unified Dashboard)
         get_admin_dashboard_html(stats)
+        
+        st.markdown("---")
+        st.subheader("📊 تحليلات متقدمة")
+        
+        # الحصول على بيانات التحليل
+        transactions = db.get_all_transactions()
+        
+        if transactions and len(transactions) > 0:
+            # تحويل إلى DataFrame
+            df = pd.DataFrame(transactions)
+            
+            # تكوين Seaborn
+            sns.set_theme(style="whitegrid", palette="muted")
+            sns.set_context("notebook", font_scale=1.1)
+            
+            # عمودان للرسوم البيانية
+            chart_col1, chart_col2 = st.columns(2)
+            
+            with chart_col1:
+                st.markdown("### 🏎️ توزيع أنواع السيارات")
+                if 'car_type' in df.columns and not df['car_type'].isna().all():
+                    fig1, ax1 = plt.subplots(figsize=(8, 5))
+                    car_counts = df['car_type'].value_counts()
+                    sns.barplot(x=car_counts.values, y=car_counts.index, ax=ax1, palette="viridis")
+                    ax1.set_xlabel("العدد")
+                    ax1.set_ylabel("نوع السيارة")
+                    plt.tight_layout()
+                    st.pyplot(fig1)
+                    plt.close()
+                else:
+                    st.info("لا توجد بيانات كافية")
+            
+            with chart_col2:
+                st.markdown("### 🏷️ متوسط الأسعار حسب العلامة")
+                if 'brand' in df.columns and 'estimated_price' in df.columns:
+                    brand_prices = df.groupby('brand')['estimated_price'].mean().sort_values(ascending=False).head(10)
+                    if not brand_prices.empty:
+                        fig2, ax2 = plt.subplots(figsize=(8, 5))
+                        sns.barplot(x=brand_prices.values, y=brand_prices.index, ax=ax2, palette="rocket_r")
+                        ax2.set_xlabel("متوسط السعر (€)")
+                        ax2.set_ylabel("العلامة التجارية")
+                        plt.tight_layout()
+                        st.pyplot(fig2)
+                        plt.close()
+                    else:
+                        st.info("لا توجد بيانات كافية")
+                else:
+                    st.info("لا توجد بيانات كافية")
+            
+            # رسم بياني خطي للمعاملات عبر الزمن
+            st.markdown("### 📈 تطور المعاملات عبر الزمن")
+            if 'created_at' in df.columns:
+                df['date'] = pd.to_datetime(df['created_at']).dt.date
+                daily_counts = df.groupby('date').size()
+                
+                if len(daily_counts) > 0:
+                    fig3, ax3 = plt.subplots(figsize=(12, 4))
+                    sns.lineplot(x=daily_counts.index, y=daily_counts.values, ax=ax3, marker='o', color='#4CAF50', linewidth=2)
+                    ax3.set_xlabel("التاريخ")
+                    ax3.set_ylabel("عدد المعاملات")
+                    ax3.grid(True, alpha=0.3)
+                    plt.xticks(rotation=45)
+                    plt.tight_layout()
+                    st.pyplot(fig3)
+                    plt.close()
+                else:
+                    st.info("لا توجد معاملات لعرضها")
+        else:
+            st.info("📊 لا توجد بيانات كافية لإنشاء الرسوم البيانية")
     
     elif admin_menu == t('admin.users'):
         st.subheader(f"👥 {t('admin.users')}")

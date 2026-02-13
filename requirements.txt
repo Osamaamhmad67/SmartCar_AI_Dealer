@@ -33,3 +33,8 @@ streamlit-scroll-to-top>=0.0.5
 
 # --- أدوات التاريخ (Date Utilities) ---
 python-dateutil>=2.8.0
+
+# --- تصور البيانات والرسوم البيانية (Data Visualization & Charts) ---
+matplotlib>=3.8.0
+seaborn>=0.13.0
+pandas>=2.0.0
