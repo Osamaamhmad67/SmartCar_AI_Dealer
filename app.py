@@ -8122,7 +8122,7 @@ def admin_page():
     # القائمة الجانبية
     admin_menu = st.selectbox(
         t('admin.title'),
-        [t('admin.statistics'), t('admin.users'), t('admin.employees'), t('admin.transactions'), t('admin.financial_settings')]
+        [t('admin.statistics'), '📊 مبيعات الموظفين', t('admin.users'), t('admin.employees'), t('admin.transactions'), t('admin.financial_settings')]
     )
     
     db = DatabaseManager()
@@ -8202,6 +8202,103 @@ def admin_page():
                     st.info("لا توجد معاملات لعرضها")
         else:
             st.info("📊 لا توجد بيانات كافية لإنشاء الرسوم البيانية")
+    
+    elif admin_menu == '📊 مبيعات الموظفين':
+        st.subheader("📊 تتبع مبيعات الموظفين والعمولات")
+        
+        # اختيار الشهر والسنة
+        col_month, col_year = st.columns(2)
+        with col_month:
+            current_month = datetime.now().month
+            month = st.selectbox("الشهر", list(range(1, 13)), index=current_month-1)
+        with col_year:
+            current_year = datetime.now().year
+            year = st.number_input("السنة", min_value=2020, max_value=2030, value=current_year)
+        
+        # نسبة العمولة
+        commission_rate = st.slider("نسبة العمولة %", min_value=1.0, max_value=10.0, value=3.0, step=0.5) / 100
+        
+        # جلب البيانات
+        sales_summary = db.get_all_employees_sales_summary(month, year, commission_rate)
+        
+        if not sales_summary:
+            st.warning("⚠️ لا يوجد موظفين في النظام")
+        else:
+            st.markdown("---")
+            
+            # جدول المبيعات
+            st.markdown("### 📋 ملخص المبيعات والرواتب")
+            
+            for emp_data in sales_summary:
+                with st.expander(f"👤 {emp_data['name']} - إجمالي: {emp_data['total_salary']:.2f} €"):
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.metric("🏁 عدد المبيعات", emp_data['sales_count'])
+                        st.metric("💶 إجمالي المبيعات", f"{emp_data['total_sales']:.2f} €")
+                    
+                    with col2:
+                        st.metric("💼 الراتب الأساسي", f"{emp_data['monthly_salary']:.2f} €")
+                        st.metric("🎁 العمولة", f"{emp_data['commission']:.2f} €")
+                    
+                    with col3:
+                        st.metric("💰 الإجمالي الشهري", f"{emp_data['total_salary']:.2f} €", delta=f"+{emp_data['commission']:.2f} €")
+            
+            st.markdown("---")
+            
+            # الرسوم البيانية
+            st.subheader("📊 التحليلات البصرية")
+            
+            # إعداد البيانات للرسوم
+            df_sales = pd.DataFrame(sales_summary)
+            
+            if len(df_sales) > 0:
+                # تكوين Seaborn
+                sns.set_theme(style="whitegrid", palette="muted")
+                
+                # رسمان في صف واحد
+                chart_col1, chart_col2 = st.columns(2)
+                
+                with chart_col1:
+                    st.markdown("### 🏷️ مقارنة مبيعات الموظفين")
+                    fig1, ax1 = plt.subplots(figsize=(8, 5))
+                    sns.barplot(data=df_sales, x='total_sales', y='name', ax=ax1, palette="viridis")
+                    ax1.set_xlabel("إجمالي المبيعات (€)")
+                    ax1.set_ylabel("الموظف")
+                    plt.tight_layout()
+                    st.pyplot(fig1)
+                    plt.close()
+                
+                with chart_col2:
+                    st.markdown("### 💰 مقارنة الرواتب (أساسي + عمولة)")
+                    fig2, ax2 = plt.subplots(figsize=(8, 5))
+                    
+                    # إعداد بيانات الرواتب
+                    x_pos = range(len(df_sales))
+                    ax2.barh(x_pos, df_sales['monthly_salary'], label='الراتب الأساسي', color='#4CAF50')
+                    ax2.barh(x_pos, df_sales['commission'], left=df_sales['monthly_salary'], label='العمولة', color='#FFC107')
+                    
+                    ax2.set_yticks(x_pos)
+                    ax2.set_yticklabels(df_sales['name'])
+                    ax2.set_xlabel("المبلغ (€)")
+                    ax2.set_ylabel("الموظف")
+                    ax2.legend()
+                    plt.tight_layout()
+                    st.pyplot(fig2)
+                    plt.close()
+                
+                # رسم بياني للعد
+                st.markdown("### 🏁 عدد المبيعات لكل موظف")
+                fig3, ax3 = plt.subplots(figsize=(12, 4))
+                sns.barplot(data=df_sales, x='name', y='sales_count', ax=ax3, palette="rocket_r")
+                ax3.set_xlabel("الموظف")
+                ax3.set_ylabel("عدد المبيعات")
+                plt.xticks(rotation=45, ha='right')
+                plt.tight_layout()
+                st.pyplot(fig3)
+                plt.close()
+            else:
+                st.info("لا توجد بيانات مبيعات لهذا الشهر")
     
     elif admin_menu == t('admin.users'):
         st.subheader(f"👥 {t('admin.users')}")

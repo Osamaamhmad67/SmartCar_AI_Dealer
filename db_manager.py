@@ -117,12 +117,13 @@ class DatabaseManager:
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )''')
             
-            # إضافة أعمدة جديدة لجدول المعاملات (نوع الوقود، الحالة، اللون، نسبة الربح)
+            # إضافة أعمدة جديدة لجدول المعاملات (نوع الوقود، الحالة، اللون، نسبة الربح، الموظف)
             trans_new_columns = [
                 ('fuel_type', 'TEXT'),
                 ('condition', 'TEXT'),
                 ('color', 'TEXT'),
-                ('profit_margin', 'REAL')  # نسبة الربح عند البيع
+                ('profit_margin', 'REAL'),  # نسبة الربح عند البيع
+                ('employee_id', 'INTEGER')  # الموظف الذي أجرى البيع
             ]
             for col_name, col_type in trans_new_columns:
                 try:
@@ -1657,4 +1658,79 @@ class DatabaseManager:
                 ''', (end_of_day, round(net_worked, 2), record['id']))
             
             return len(incomplete)
+
+    # ===== تتبع مبيعات الموظفين (Employee Sales Tracking) =====
+    
+    def get_employee_sales(self, employee_id: int, month: int = None, year: int = None) -> Dict:
+        """حساب مبيعات موظف معين في شهر/سنة محددة"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # بناء الاستعلام حسب المعايير
+            query = """
+                SELECT 
+                    COUNT(*) as sales_count,
+                    COALESCE(SUM(estimated_price), 0) as total_sales
+                FROM transactions 
+                WHERE employee_id = ?
+            """
+            params = [employee_id]
+            
+            if year:
+                query += " AND strftime('%Y', created_at) = ?"
+                params.append(str(year))
+            if month:
+                query += " AND strftime('%m', created_at) = ?"
+                params.append(f"{month:02d}")
+            
+            result = cursor.execute(query, params).fetchone()
+            
+            return {
+                'employee_id': employee_id,
+                'sales_count': result['sales_count'] or 0,
+                'total_sales': result['total_sales'] or 0
+            }
+    
+    def get_all_employees_sales_summary(self, month: int = None, year: int = None, commission_rate: float = 0.03) -> List[Dict]:
+        """حصول على ملخص مبيعات جميع الموظفين مع الرواتب والعمولات"""
+        employees = self.get_all_employees()
+        summary = []
+        
+        for emp in employees:
+            sales_data = self.get_employee_sales(emp['id'], month, year)
+            commission = sales_data['total_sales'] * commission_rate
+            
+            summary.append({
+                'employee_id': emp['id'],
+                'name': f"{emp.get('first_name', '')} {emp.get('last_name', '')}".strip(),
+                'monthly_salary': emp.get('monthly_salary', 0),
+                'sales_count': sales_data['sales_count'],
+                'total_sales': sales_data['total_sales'],
+                'commission': commission,
+                'total_salary': emp.get('monthly_salary', 0) + commission
+            })
+        
+        return summary
+    
+    def assign_default_employee_to_transactions(self, default_employee_id: int) -> int:
+        """ربط جميع المعاملات التي ليس لها موظف بموظف افتراضي"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE transactions 
+                SET employee_id = ? 
+                WHERE employee_id IS NULL
+            """, (default_employee_id,))
+            return cursor.rowcount
+    
+    def get_all_transactions(self) -> List[Dict]:
+        """جلب جميع المعاملات"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM transactions ORDER BY created_at DESC')
+            return [dict(row) for row in cursor.fetchall()]
+    
+    def calculate_commission(self, sales_total: float, rate: float = 0.03) -> float:
+        """حساب العمولة بناءً على المبيعات"""
+        return sales_total * rate
 
