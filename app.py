@@ -9501,24 +9501,25 @@ def verify_identity_page():
                             with col_force:
                                 if st.button(f"✅ قبول البيانات المتاحة", key="force_accept_id", type="primary", use_container_width=True):
                                     try:
-                                    save_data = {k: v for k, v in combined.items() if k != 'error'}
-                                    # ضمان وجود قيم أساسية حتى لو غير واضحة
-                                    if not save_data.get('id_number') or save_data.get('id_number') == 'غير واضح':
-                                        save_data['id_number'] = 'PENDING'
-                                    if not save_data.get('nationality') or save_data.get('nationality') == 'غير واضح':
-                                        save_data['nationality'] = 'PENDING'
-                                    db.update_user(user['id'], **save_data)
-                                    st.session_state.user.update(save_data)
-                                    del st.session_state.scanned_id_data
-                                    st.success("✅ تم حفظ البيانات المتاحة!")
+                                        save_data = {k: v for k, v in combined.items() if k != 'error'}
+                                        # ضمان وجود قيم أساسية حتى لو غير واضحة
+                                        if not save_data.get('id_number') or save_data.get('id_number') == 'غير واضح':
+                                            save_data['id_number'] = 'PENDING'
+                                        if not save_data.get('nationality') or save_data.get('nationality') == 'غير واضح':
+                                            save_data['nationality'] = 'PENDING'
+                                        db.update_user(user['id'], **save_data)
+                                        st.session_state.user.update(save_data)
+                                        if 'scanned_id_data' in st.session_state:
+                                            del st.session_state.scanned_id_data
+                                        st.success("✅ تم حفظ البيانات المتاحة")
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"خطأ: {e}")
+                            with col_retry2:
+                                if st.button(f"🔄 إعادة المحاولة", key="retry_id_fail", use_container_width=True):
+                                    if 'scanned_id_data' in st.session_state:
+                                        del st.session_state.scanned_id_data
                                     st.rerun()
-                                except Exception as e:
-                                    st.error(f"خطأ: {e}")
-                        with col_retry2:
-                            if st.button(f"🔄 إعادة المحاولة", key="retry_id_fail", use_container_width=True):
-                                if 'scanned_id_data' in st.session_state:
-                                    del st.session_state.scanned_id_data
-                                st.rerun()
 
 
     # === تبويب رخصة القيادة ===
@@ -9589,34 +9590,34 @@ def verify_identity_page():
                     with col2:
                         lic_back = st.file_uploader(t('admin.license_back'), type=['jpg', 'png', 'jpeg'], key="v_lic_b")
                         if lic_back: lic_back_val = lic_back.getvalue()
-            else:
-                with col1:
-                    lic_front_cam = st.camera_input(t('admin.capture_front'), key="cam_lic_f")
-                    if lic_front_cam: lic_front_val = lic_front_cam.getvalue()
-                with col2:
-                    lic_back_cam = st.camera_input(t('admin.capture_back'), key="cam_lic_b")
-                    if lic_back_cam: lic_back_val = lic_back_cam.getvalue()
+                else:
+                    with col1:
+                        lic_front_cam = st.camera_input(t('admin.capture_front'), key="cam_lic_f")
+                        if lic_front_cam: lic_front_val = lic_front_cam.getvalue()
+                    with col2:
+                        lic_back_cam = st.camera_input(t('admin.capture_back'), key="cam_lic_b")
+                        if lic_back_cam: lic_back_val = lic_back_cam.getvalue()
 
-            if lic_front_val and lic_back_val:
-                if st.button(f"{t('admin.scan_verify_license')} 🔍", key="btn_verify_lic"):
-                    with st.spinner(t('admin.analyzing_license')):
-                        scanner = DocumentScanner()
-                        front_res = scanner.scan_driver_license(lic_front_val)
-                        back_res = scanner.scan_driver_license(lic_back_val)
-                        
-                        # دمج البيانات
-                        combined = {k: v for k, v in front_res.items() if v != 'غير واضح'}
-                        for k, v in back_res.items():
-                            if v != 'غير واضح' and k not in combined:
-                                combined[k] = v
-                        
-                        # حفظ البيانات في الجلسة لعرضها
-                        st.session_state.scanned_license_data = combined
-                
-                # عرض البيانات المستخرجة إذا وجدت
-                if st.session_state.get('scanned_license_data'):
-                    combined = st.session_state.scanned_license_data
+                if lic_front_val and lic_back_val:
+                    if st.button(f"{t('admin.scan_verify_license')} 🔍", key="btn_verify_lic"):
+                        with st.spinner(t('admin.analyzing_license')):
+                            scanner = DocumentScanner()
+                            front_res = scanner.scan_driver_license(lic_front_val)
+                            back_res = scanner.scan_driver_license(lic_back_val)
+                            
+                            # دمج البيانات
+                            combined = {k: v for k, v in front_res.items() if v != 'غير واضح'}
+                            for k, v in back_res.items():
+                                if v != 'غير واضح' and k not in combined:
+                                    combined[k] = v
+                            
+                            # حفظ البيانات في الجلسة لعرضها
+                            st.session_state.scanned_license_data = combined
                     
+                    # عرض البيانات المستخرجة إذا وجدت
+                    if st.session_state.get('scanned_license_data'):
+                        combined = st.session_state.scanned_license_data
+                        
                     st.markdown("""
                     <style>
                     .license-card {
