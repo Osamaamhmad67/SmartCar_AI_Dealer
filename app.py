@@ -73,9 +73,7 @@ import time
 import streamlit.components.v1 as components
 from PIL import Image
 from io import BytesIO
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
+# matplotlib, seaborn, pandas moved to lazy imports for faster loading
 from utils.invoice_generator import InvoiceGenerator
 from utils.payment_processor import PaymentProcessor
 from utils.ocr_scanner import DocumentScanner
@@ -8137,8 +8135,17 @@ def admin_page():
         st.markdown("---")
         st.subheader("📊 تحليلات متقدمة")
         
-        # الحصول على بيانات التحليل
-        transactions = db.get_all_transactions()
+        # Lazy import - تحميل المكتبات فقط عند الحاجة
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        
+        # الحصول على بيانات التحليل مع caching
+        @st.cache_data(ttl=300)  # Cache لمدة 5 دقائق
+        def get_cached_transactions():
+            return db.get_all_transactions()
+        
+        transactions = get_cached_transactions()
         
         if transactions and len(transactions) > 0:
             # تحويل إلى DataFrame
@@ -8218,8 +8225,12 @@ def admin_page():
         # نسبة العمولة
         commission_rate = st.slider("نسبة العمولة %", min_value=1.0, max_value=10.0, value=3.0, step=0.5) / 100
         
-        # جلب البيانات
-        sales_summary = db.get_all_employees_sales_summary(month, year, commission_rate)
+        # جلب البيانات مع caching
+        @st.cache_data(ttl=180)  # Cache لمدة 3 دقائق
+        def get_cached_sales_summary(month, year, rate):
+            return db.get_all_employees_sales_summary(month, year, rate)
+        
+        sales_summary = get_cached_sales_summary(month, year, commission_rate)
         
         if not sales_summary:
             st.warning("⚠️ لا يوجد موظفين في النظام")
@@ -8248,6 +8259,11 @@ def admin_page():
             
             # الرسوم البيانية
             st.subheader("📊 التحليلات البصرية")
+            
+            # Lazy import - تحميل المكتبات فقط عند الحاجة
+            import pandas as pd
+            import matplotlib.pyplot as plt
+            import seaborn as sns
             
             # إعداد البيانات للرسوم
             df_sales = pd.DataFrame(sales_summary)
