@@ -9353,100 +9353,154 @@ def verify_identity_page():
         if is_id_verified:
             st.success(f"✅ {t('identity.id_verified', 'ID Verified')} ({t('profile.id_number')}: {user.get('id_number')})")
         else:
-            st.info(t('identity.step1_hint', 'Step 1: Please scan front and back of your ID'))
+            # خيار بين المسح الضوئي والإدخال اليدوي
+            entry_mode = st.radio(
+                "اختر طريقة الإدخال:",
+                ["📸 مسح ضوئي (OCR)", "⌨️ إدخال يدوي"],
+                horizontal=True,
+                key="id_entry_mode"
+            )
             
-            method = st.radio(t('identity.input_method', 'Input Method'), [t('predict.upload_image'), t('predict.capture_image')], horizontal=True, key="id_method")
-            
-            id_front_val = None
-            id_back_val = None
-            
-            col1, col2 = st.columns(2)
-            
-            if method == t('admin.upload_image'):
-                with col1:
-                    id_front = st.file_uploader(t('admin.id_front'), type=['jpg', 'png', 'jpeg'], key="v_id_f")
-                    if id_front: id_front_val = id_front.getvalue()
-                with col2:
-                    id_back = st.file_uploader(t('admin.id_back'), type=['jpg', 'png', 'jpeg'], key="v_id_b")
-                    if id_back: id_back_val = id_back.getvalue()
-            else:
-                with col1:
-                    id_front_cam = st.camera_input(t('admin.capture_front'), key="cam_id_f")
-                    if id_front_cam: id_front_val = id_front_cam.getvalue()
-                with col2:
-                    id_back_cam = st.camera_input(t('admin.capture_back'), key="cam_id_b")
-                    if id_back_cam: id_back_val = id_back_cam.getvalue()
-
-            if id_front_val and id_back_val:
-                if st.button(f"{t('admin.scan_verify_id')} 🔍", key="btn_verify_id"):
-                    with st.spinner(t('admin.analyzing_id')):
-                        scanner = DocumentScanner()
-                        front_res = scanner.scan_id_card(id_front_val)
-                        back_res = scanner.scan_id_card(id_back_val)
-                        
-                        # دمج البيانات
-                        combined = {k: v for k, v in front_res.items() if v != 'غير واضح'}
-                        for k, v in back_res.items():
-                            if v != 'غير واضح' and k not in combined:
-                                combined[k] = v
-                        
-                        # حفظ البيانات في الجلسة لعرضها
-                        st.session_state.scanned_id_data = combined
+            if entry_mode == "⌨️ إدخال يدوي":
+                # === نموذج الإدخال اليدوي ===
+                st.markdown("### 📝 أدخل بيانات الهوية يدوياً")
                 
-                # عرض البيانات المستخرجة إذا وجدت
-                if st.session_state.get('scanned_id_data'):
-                    combined = st.session_state.scanned_id_data
-                    
-                    st.markdown("""
-                    <style>
-                    .id-card {
-                        background: linear-gradient(135deg, #0E1117 0%, #161B22 100%);
-                        border-radius: 16px;
-                        padding: 24px;
-                        margin: 20px 0;
-                        border: 2px solid #f1c40f;
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                    }
-                    .id-card h3 { color: #f1c40f; margin-bottom: 20px; text-align: center; }
-                    .id-field { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-                    .id-label { color: #888; font-size: 0.9rem; }
-                    .id-value { color: #fff; font-weight: bold; }
-                    </style>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown(f"""
-                    <div class="id-card">
-                        <h3>🪪 بيانات الهوية المستخرجة</h3>
-                        <div class="id-field"><span class="id-label">الاسم الكامل:</span><span class="id-value">{combined.get('full_name', 'غير واضح')}</span></div>
-                        <div class="id-field"><span class="id-label">رقم الهوية:</span><span class="id-value">{combined.get('id_number', 'غير واضح')}</span></div>
-                        <div class="id-field"><span class="id-label">الجنسية:</span><span class="id-value">{combined.get('nationality', 'غير واضح')}</span></div>
-                        <div class="id-field"><span class="id-label">تاريخ الميلاد:</span><span class="id-value">{combined.get('birth_date', 'غير واضح')}</span></div>
-                        <div class="id-field"><span class="id-label">تاريخ الانتهاء:</span><span class="id-value">{combined.get('expiry_date', 'غير واضح')}</span></div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    if combined.get('id_number') and combined.get('id_number') != 'غير واضح':
-                        col_confirm, col_retry = st.columns(2)
-                        with col_confirm:
-                            if st.button(f"✅ {t('admin.confirm_save_data')}", key="confirm_id", type="primary", use_container_width=True):
-                                try:
-                                    db.update_user(user['id'], **combined)
-                                    st.session_state.user.update(combined)
-                                    del st.session_state.scanned_id_data
-                                    st.success(f"✅ {t('admin.id_verified_success')}")
-                                    st.rerun()
-                                except Exception as e:
-                                    st.error(f"{t('admin.save_data_error')}: {e}")
-                        with col_retry:
-                            if st.button(f"🔄 {t('admin.rescan')}", key="retry_id", use_container_width=True):
-                                del st.session_state.scanned_id_data
-                                st.rerun()
+                manual_full_name = st.text_input("الاسم الكامل *", key="manual_id_name")
+                manual_id_number = st.text_input("رقم الهوية *", key="manual_id_num")
+                
+                col_n1, col_n2 = st.columns(2)
+                with col_n1:
+                    manual_nationality = st.selectbox(
+                        "الجنسية *",
+                        ["سوري", "سعودي", "مصري", "أردني", "لبناني", "عراقي", "فلسطيني", "ألماني", "أخرى"],
+                        key="manual_nationality"
+                    )
+                with col_n2:
+                    manual_gender = st.selectbox("الجنس", ["ذكر", "أنثى"], key="manual_gender")
+                
+                col_d1, col_d2 = st.columns(2)
+                with col_d1:
+                    from datetime import date
+                    manual_birth_date = st.date_input("تاريخ الميلاد", value=date(1990, 1, 1), key="manual_birth")
+                with col_d2:
+                    manual_expiry_date = st.date_input("تاريخ انتهاء الهوية", value=date(2030, 12, 31), key="manual_expiry")
+                
+                if st.button("✅ حفظ البيانات", type="primary", use_container_width=True, key="save_manual_id"):
+                    if manual_full_name and manual_id_number:
+                        try:
+                            manual_data = {
+                                'full_name': manual_full_name,
+                                'id_number': manual_id_number,
+                                'nationality': manual_nationality,
+                                'gender': manual_gender,
+                                'birth_date': str(manual_birth_date),
+                                'expiry_date': str(manual_expiry_date)
+                            }
+                            db.update_user(user['id'], **manual_data)
+                            st.session_state.user.update(manual_data)
+                            st.success("✅ تم حفظ بيانات الهوية بنجاح!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ خطأ في الحفظ: {e}")
                     else:
-                        st.warning("⚠️ لم يتم التعرف على بعض البيانات بوضوح. يمكنك القبول أو إعادة المحاولة.")
-                        col_force, col_retry2 = st.columns(2)
-                        with col_force:
-                            if st.button(f"✅ قبول البيانات المتاحة", key="force_accept_id", type="primary", use_container_width=True):
-                                try:
+                        st.warning("⚠️ يرجى ملء الحقول المطلوبة (الاسم ورقم الهوية)")
+            
+            else:
+                # === المسح الضوئي (الطريقة القديمة) ===
+                st.info(t('identity.step1_hint', 'Step 1: Please scan front and back of your ID'))
+                
+                method = st.radio(t('identity.input_method', 'Input Method'), [t('predict.upload_image'), t('predict.capture_image')], horizontal=True, key="id_method")
+                
+                id_front_val = None
+                id_back_val = None
+                
+                col1, col2 = st.columns(2)
+                
+                if method == t('admin.upload_image'):
+                    with col1:
+                        id_front = st.file_uploader(t('admin.id_front'), type=['jpg', 'png', 'jpeg'], key="v_id_f")
+                        if id_front: id_front_val = id_front.getvalue()
+                    with col2:
+                        id_back = st.file_uploader(t('admin.id_back'), type=['jpg', 'png', 'jpeg'], key="v_id_b")
+                        if id_back: id_back_val = id_back.getvalue()
+                else:
+                    with col1:
+                        id_front_cam = st.camera_input(t('admin.capture_front'), key="cam_id_f")
+                        if id_front_cam: id_front_val = id_front_cam.getvalue()
+                    with col2:
+                        id_back_cam = st.camera_input(t('admin.capture_back'), key="cam_id_b")
+                        if id_back_cam: id_back_val = id_back_cam.getvalue()
+
+                if id_front_val and id_back_val:
+                    if st.button(f"{t('admin.scan_verify_id')} 🔍", key="btn_verify_id"):
+                        with st.spinner(t('admin.analyzing_id')):
+                            scanner = DocumentScanner()
+                            front_res = scanner.scan_id_card(id_front_val)
+                            back_res = scanner.scan_id_card(id_back_val)
+                            
+                            # دمج البيانات
+                            combined = {k: v for k, v in front_res.items() if v != 'غير واضح'}
+                            for k, v in back_res.items():
+                                if v != 'غير واضح' and k not in combined:
+                                    combined[k] = v
+                            
+                            # حفظ البيانات في الجلسة لعرضها
+                            st.session_state.scanned_id_data = combined
+                    
+                    # عرض البيانات المستخرجة إذا وجدت
+                    if st.session_state.get('scanned_id_data'):
+                        combined = st.session_state.scanned_id_data
+                        
+                        st.markdown("""
+                        <style>
+                        .id-card {
+                            background: linear-gradient(135deg, #0E1117 0%, #161B22 100%);
+                            border-radius: 16px;
+                            padding: 24px;
+                            margin: 20px 0;
+                            border: 2px solid #f1c40f;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                        }
+                        .id-card h3 { color: #f1c40f; margin-bottom: 20px; text-align: center; }
+                        .id-field { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+                        .id-label { color: #888; font-size: 0.9rem; }
+                        .id-value { color: #fff; font-weight: bold; }
+                        </style>
+                        """, unsafe_allow_html=True)
+                        
+                        st.markdown(f"""
+                        <div class="id-card">
+                            <h3>🪪 بيانات الهوية المستخرجة</h3>
+                            <div class="id-field"><span class="id-label">الاسم الكامل:</span><span class="id-value">{combined.get('full_name', 'غير واضح')}</span></div>
+                            <div class="id-field"><span class="id-label">رقم الهوية:</span><span class="id-value">{combined.get('id_number', 'غير واضح')}</span></div>
+                            <div class="id-field"><span class="id-label">الجنسية:</span><span class="id-value">{combined.get('nationality', 'غير واضح')}</span></div>
+                            <div class="id-field"><span class="id-label">تاريخ الميلاد:</span><span class="id-value">{combined.get('birth_date', 'غير واضح')}</span></div>
+                            <div class="id-field"><span class="id-label">تاريخ الانتهاء:</span><span class="id-value">{combined.get('expiry_date', 'غير واضح')}</span></div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        if combined.get('id_number') and combined.get('id_number') != 'غير واضح':
+                            col_confirm, col_retry = st.columns(2)
+                            with col_confirm:
+                                if st.button(f"✅ {t('admin.confirm_save_data')}", key="confirm_id", type="primary", use_container_width=True):
+                                    try:
+                                        db.update_user(user['id'], **combined)
+                                        st.session_state.user.update(combined)
+                                        del st.session_state.scanned_id_data
+                                        st.success(f"✅ {t('admin.id_verified_success')}")
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"{t('admin.save_data_error')}: {e}")
+                            with col_retry:
+                                if st.button(f"🔄 {t('admin.rescan')}", key="retry_id", use_container_width=True):
+                                    del st.session_state.scanned_id_data
+                                    st.rerun()
+                        else:
+                            st.warning("⚠️ لم يتم التعرف على بعض البيانات بوضوح. يمكنك القبول أو إعادة المحاولة.")
+                            col_force, col_retry2 = st.columns(2)
+                            with col_force:
+                                if st.button(f"✅ قبول البيانات المتاحة", key="force_accept_id", type="primary", use_container_width=True):
+                                    try:
                                     save_data = {k: v for k, v in combined.items() if k != 'error'}
                                     # ضمان وجود قيم أساسية حتى لو غير واضحة
                                     if not save_data.get('id_number') or save_data.get('id_number') == 'غير واضح':
@@ -9472,22 +9526,69 @@ def verify_identity_page():
         if is_license_verified:
             st.success(f"✅ تم التحقق من الرخصة (رقم: {user.get('license_number')})")
         else:
-            st.info(t('admin.step2_license_hint'))
+            # خيار بين المسح الضوئي والإدخال اليدوي
+            entry_mode_lic = st.radio(
+                "اختر طريقة الإدخال:",
+                ["📸 مسح ضوئي (OCR)", "⌨️ إدخال يدوي"],
+                horizontal=True,
+                key="lic_entry_mode"
+            )
             
-            method_lic = st.radio(t('identity.input_method', 'Input Method'), [t('predict.upload_image'), t('predict.capture_image')], horizontal=True, key="lic_method")
+            if entry_mode_lic == "⌨️ إدخال يدوي":
+                # === نموذج الإدخال اليدوي ===
+                st.markdown("### 🚗 أدخل بيانات الرخصة يدوياً")
+                
+                manual_license_number = st.text_input("رقم الرخصة *", key="manual_lic_num")
+                
+                col_l1, col_l2 = st.columns(2)
+                with col_l1:
+                    from datetime import date
+                    manual_license_issue = st.date_input("تاريخ الإصدار", value=date(2020, 1, 1), key="manual_lic_issue")
+                with col_l2:
+                    manual_license_expiry = st.date_input("تاريخ الانتهاء", value=date(2030, 12, 31), key="manual_lic_expiry")
+                
+                manual_license_type = st.selectbox(
+                    "نوع الرخصة",
+                    ["B (سيارات خاصة)", "C (شاحنات)", "D (حافلات)", "أخرى"],
+                    key="manual_lic_type"
+                )
+                
+                if st.button("✅ حفظ البيانات", type="primary", use_container_width=True, key="save_manual_lic"):
+                    if manual_license_number:
+                        try:
+                            manual_lic_data = {
+                                'license_number': manual_license_number,
+                                'license_issue_date': str(manual_license_issue),
+                                'license_expiry_date': str(manual_license_expiry),
+                                'license_type': manual_license_type
+                            }
+                            db.update_user(user['id'], **manual_lic_data)
+                            st.session_state.user.update(manual_lic_data)
+                            st.success("✅ تم حفظ بيانات الرخصة بنجاح!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ خطأ في الحفظ: {e}")
+                    else:
+                        st.warning("⚠️ يرجى إدخال رقم الرخصة")
             
-            lic_front_val = None
-            lic_back_val = None
-            
-            col1, col2 = st.columns(2)
-            
-            if method_lic == t('admin.upload_image'):
-                with col1:
-                    lic_front = st.file_uploader(t('admin.license_front'), type=['jpg', 'png', 'jpeg'], key="v_lic_f")
-                    if lic_front: lic_front_val = lic_front.getvalue()
-                with col2:
-                    lic_back = st.file_uploader(t('admin.license_back'), type=['jpg', 'png', 'jpeg'], key="v_lic_b")
-                    if lic_back: lic_back_val = lic_back.getvalue()
+            else:
+                # === المسح الضوئي (الطريقة القديمة) ===
+                st.info(t('admin.step2_license_hint'))
+                
+                method_lic = st.radio(t('identity.input_method', 'Input Method'), [t('predict.upload_image'), t('predict.capture_image')], horizontal=True, key="lic_method")
+                
+                lic_front_val = None
+                lic_back_val = None
+                
+                col1, col2 = st.columns(2)
+                
+                if method_lic == t('admin.upload_image'):
+                    with col1:
+                        lic_front = st.file_uploader(t('admin.license_front'), type=['jpg', 'png', 'jpeg'], key="v_lic_f")
+                        if lic_front: lic_front_val = lic_front.getvalue()
+                    with col2:
+                        lic_back = st.file_uploader(t('admin.license_back'), type=['jpg', 'png', 'jpeg'], key="v_lic_b")
+                        if lic_back: lic_back_val = lic_back.getvalue()
             else:
                 with col1:
                     lic_front_cam = st.camera_input(t('admin.capture_front'), key="cam_lic_f")
