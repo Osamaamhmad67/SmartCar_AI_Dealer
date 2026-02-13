@@ -6849,6 +6849,8 @@ def results_page():
                                 
                                 st.session_state.last_transaction_id = transaction_id
                                 st.session_state['admin_save_mode'] = False
+                                # حفظ بيانات العميل المختار لاستخدامها في إنشاء الفاتورة
+                                st.session_state['selected_customer_for_invoice'] = selected_customer
                                 st.success(f"✅ {t('admin.estimate_saved_for_customer')}: {selected_customer.get('full_name') or selected_customer.get('username')}")
                                 st.rerun()
                             except Exception as e:
@@ -6908,22 +6910,29 @@ def results_page():
                         'estimated_price': prediction_result['estimated_price'],
                         **car_data
                     }
+                    
+                    # استخدام بيانات العميل المختار إذا كان الآدمن هو من أنشأ العقد
+                    customer_for_invoice = st.session_state.get('selected_customer_for_invoice', st.session_state.user)
+                    
                     invoice_path = generator.generate_car_invoice(
                         transaction_data,
-                        st.session_state.user
+                        customer_for_invoice  # استخدام بيانات العميل الصحيحة
                     )
                     st.session_state.invoice_path = invoice_path
                 
                 # إرسال البريد
                 notifier = NotificationManager()
                 
+                # استخدام بيانات العميل المختار إذا كان الآدمن هو من أنشأ العقد
+                customer_for_invoice = st.session_state.get('selected_customer_for_invoice', st.session_state.user)
+                
                 if not notifier.email_configured:
                     st.warning(f"⚠️ {t('admin.email_incomplete')}")
                 else:
                     result = notifier.send_invoice_email(
-                        recipient_email=st.session_state.user['email'],
+                        recipient_email=customer_for_invoice['email'],  # بريد العميل الصحيح
                         invoice_path=st.session_state.invoice_path,
-                        user_data=st.session_state.user,
+                        user_data=customer_for_invoice,  # بيانات العميل الصحيحة
                         transaction_data={
                             'estimated_price': prediction_result['estimated_price'],
                             **car_data
