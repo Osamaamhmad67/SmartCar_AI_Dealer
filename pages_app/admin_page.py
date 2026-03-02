@@ -1126,6 +1126,125 @@ def admin_page():
                                      title='أنواع السيارات الأكثر طلباً', color='العدد')
                     st.plotly_chart(fig_bar_h, use_container_width=True)
                 
+                st.markdown("---")
+                
+                # 3. Monthly Revenue Trend with Profit
+                st.subheader(f"💰 {t('admin.monthly_revenue', 'Monthly Revenue Trend')}")
+                
+                df_trans['month'] = df_trans['created_at'].dt.to_period('M').astype(str)
+                monthly_rev = df_trans.groupby('month').agg(
+                    revenue=('estimated_price', 'sum'),
+                    count=('estimated_price', 'count')
+                ).reset_index()
+                monthly_rev.columns = [t('admin.month', 'Month'), t('admin.revenue', 'Revenue (€)'), t('admin.count', 'Count')]
+                
+                rev_col1, rev_col2 = st.columns(2)
+                
+                with rev_col1:
+                    fig_rev = go.Figure()
+                    fig_rev.add_trace(go.Bar(
+                        x=monthly_rev[t('admin.month', 'Month')],
+                        y=monthly_rev[t('admin.revenue', 'Revenue (€)')],
+                        name=t('admin.revenue', 'Revenue'),
+                        marker_color='#4CAF50'
+                    ))
+                    fig_rev.add_trace(go.Scatter(
+                        x=monthly_rev[t('admin.month', 'Month')],
+                        y=monthly_rev[t('admin.revenue', 'Revenue (€)')],
+                        name=t('admin.trend', 'Trend'),
+                        line=dict(color='#FF9800', width=3),
+                        mode='lines+markers'
+                    ))
+                    fig_rev.update_layout(
+                        title=t('admin.monthly_revenue_chart', '📈 Monthly Revenue & Trend'),
+                        barmode='group',
+                        template='plotly_dark'
+                    )
+                    st.plotly_chart(fig_rev, use_container_width=True)
+                
+                with rev_col2:
+                    # Price Distribution Histogram
+                    fig_hist = px.histogram(
+                        df_trans, x='estimated_price',
+                        nbins=20,
+                        title=t('admin.price_distribution', '📊 Price Distribution'),
+                        labels={'estimated_price': t('admin.price', 'Price (€)'), 'count': t('admin.count', 'Count')},
+                        color_discrete_sequence=['#E91E63']
+                    )
+                    fig_hist.update_layout(template='plotly_dark')
+                    st.plotly_chart(fig_hist, use_container_width=True)
+                
+                st.markdown("---")
+                
+                # 4. Top 5 Models & Employee Performance
+                st.subheader(f"🏆 {t('admin.performance_analysis', 'Performance Analysis')}")
+                
+                perf_col1, perf_col2 = st.columns(2)
+                
+                with perf_col1:
+                    # Top 5 Most Evaluated Models
+                    df_trans['full_model'] = df_trans['brand'].fillna('') + ' ' + df_trans['car_type'].fillna('')
+                    top_models = df_trans['full_model'].value_counts().head(5).reset_index()
+                    top_models.columns = [t('admin.model', 'Model'), t('admin.count', 'Count')]
+                    
+                    fig_top = px.bar(
+                        top_models, x=t('admin.count', 'Count'), y=t('admin.model', 'Model'),
+                        orientation='h',
+                        title=t('admin.top_models', '🥇 Top 5 Most Evaluated'),
+                        color=t('admin.count', 'Count'),
+                        color_continuous_scale='Viridis'
+                    )
+                    fig_top.update_layout(template='plotly_dark', yaxis={'categoryorder': 'total ascending'})
+                    st.plotly_chart(fig_top, use_container_width=True)
+                
+                with perf_col2:
+                    # Employee Performance
+                    try:
+                        with db.get_connection() as conn:
+                            df_emp = pd.read_sql_query("""
+                                SELECT e.first_name || ' ' || COALESCE(e.last_name, '') as name,
+                                       COUNT(t.id) as sales,
+                                       COALESCE(SUM(t.estimated_price), 0) as total_value
+                                FROM employees e
+                                LEFT JOIN transactions t ON t.employee_id = e.id
+                                GROUP BY e.id
+                                ORDER BY sales DESC
+                                LIMIT 10
+                            """, conn)
+                        
+                        if not df_emp.empty and df_emp['sales'].sum() > 0:
+                            fig_emp = px.bar(
+                                df_emp, x='sales', y='name',
+                                orientation='h',
+                                title=t('admin.employee_ranking', '👥 Employee Sales Ranking'),
+                                color='total_value',
+                                color_continuous_scale='Blues',
+                                labels={'sales': t('admin.sales', 'Sales'), 'name': t('admin.employee', 'Employee'), 'total_value': t('admin.value', 'Value (€)')}
+                            )
+                            fig_emp.update_layout(template='plotly_dark', yaxis={'categoryorder': 'total ascending'})
+                            st.plotly_chart(fig_emp, use_container_width=True)
+                        else:
+                            st.info(t('admin.no_employee_sales', 'No employee sales data yet'))
+                    except Exception:
+                        st.info(t('admin.no_employee_sales', 'No employee sales data yet'))
+                
+                st.markdown("---")
+                
+                # 5. Quick Stats Summary Cards
+                st.subheader(f"📋 {t('admin.quick_summary', 'Quick Summary')}")
+                
+                qs1, qs2, qs3, qs4 = st.columns(4)
+                avg_price = df_trans['estimated_price'].mean()
+                max_price = df_trans['estimated_price'].max()
+                total_revenue = df_trans['estimated_price'].sum()
+                this_month = df_trans[df_trans['created_at'].dt.month == pd.Timestamp.now().month]
+                
+                qs1.metric(t('admin.avg_price', 'Avg Price'), f"€{avg_price:,.0f}")
+                qs2.metric(t('admin.max_price', 'Max Price'), f"€{max_price:,.0f}")
+                qs3.metric(t('admin.total_revenue', 'Total Revenue'), f"€{total_revenue:,.0f}")
+                qs4.metric(t('admin.this_month', 'This Month'), f"{len(this_month)} {t('admin.transactions_label', 'transactions')}")
+                
+
             else:
                 st.info(t('admin.no_chart_data'))
                 
@@ -1174,8 +1293,30 @@ def admin_page():
                     st.success(f"✅ {t('admin.clean_success')} ({count})")
                 except Exception as e:
                     st.error(f"❌ Error: {e}")
+            
+            st.markdown("<div style='height: 10px'></div>", unsafe_allow_html=True)
+            
+            # Notification Reminders Button
+            if st.button(f"🔔 {t('admin.send_reminders', 'Send Reminders')}", use_container_width=True, help="Send installment & TÜV reminders"):
+                with st.spinner(t('admin.sending_reminders', 'Sending reminders...')):
+                    try:
+                        from utils.notifier import NotificationManager
+                        notifier = NotificationManager()
+                        results = notifier.run_all_reminders()
+                        
+                        st.success(f"""
+                        ✅ {t('admin.reminders_sent', 'Reminders processed!')}
+                        - 📋 {t('admin.installments_found', 'Installments due')}: {results['installments_found']}
+                        - 📧 {t('admin.reminders_emailed', 'Emails sent')}: {results['installments_sent']}
+                        - 🚗 {t('admin.tuv_found', 'TÜV checks')}: {results['tuv_found']}
+                        """)
+                        
+                        if results['errors']:
+                            st.warning(f"⚠️ {len(results['errors'])} errors occurred")
+                    except Exception as e:
+                        st.error(f"❌ Error: {e}")
         
-        st.markdown("---")
+
         st.markdown(f"### ⛽ {t('admin.fuel_price_settings')}")
         st.caption(t('admin.fuel_settings_hint'))
         

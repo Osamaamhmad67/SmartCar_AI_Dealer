@@ -83,6 +83,11 @@ def render_sidebar():
                     type="primary" if st.session_state.page == "invoices" else "secondary"):
             navigate_to("invoices")
         
+        # Inventory button
+        if st.button(f"🚗 {t('nav.inventory', 'Inventory')}", use_container_width=True, 
+                    type="primary" if st.session_state.page == "inventory" else "secondary"):
+            navigate_to("inventory")
+        
         st.markdown("---")
         
         if st.button(f"🚪 {t('app.logout')}", use_container_width=True):

@@ -91,6 +91,8 @@ from pages_app.invoices_page import invoices_page
 from pages_app.profile_pages import profile_page, change_password_page
 from pages_app.admin_page import admin_page
 from pages_app.checkout_pages import verify_identity_page, checkout_page
+from pages_app.inventory_page import inventory_page
+from components.chatbot_component import render_chatbot
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -231,6 +233,7 @@ def main():
     if st.session_state.user:
         # المستخدم مسجل الدخول
         render_sidebar()
+        render_chatbot()
         
         page_handlers = {
             'home': home_page,
@@ -241,7 +244,8 @@ def main():
             'invoices': invoices_page,
             'profile': profile_page,
             'change_password': change_password_page,
-            'admin': admin_page
+            'admin': admin_page,
+            'inventory': inventory_page
         }
         
         current_page = st.session_state.page
