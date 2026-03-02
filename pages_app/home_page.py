@@ -1835,7 +1835,16 @@ def home_page():
                                         📏 {t('predict.mileage')}: {car_info.get('mileage', 0) or 0:,} km | 
                                         ⛽ {t('predict.fuel_type')}: {safe_get(car_info, 'fuel_type')} | 
                                         🎨 {t('predict.color')}: {safe_get(car_info, 'color')}<br>
-                                        📋 {t('predict.condition')}: {safe_get(car_info, 'condition')}
+                                        📋 {t('predict.condition')}: {safe_get(car_info, 'condition')} |
+                                        ⚙️ {t('predict.transmission', 'Transmission')}: {safe_get(car_info, 'transmission')} |
+                                        🔧 {t('predict.drivetrain', 'Drivetrain')}: {safe_get(car_info, 'drivetrain')}<br>
+                                        🏭 {t('predict.engine_cc', 'Engine CC')}: {safe_get(car_info, 'engine_cc')} |
+                                        🐎 {t('predict.horsepower', 'PS')}: {safe_get(car_info, 'horsepower')} |
+                                        🌿 {t('predict.emissions', 'Emissions')}: {safe_get(car_info, 'emissions_class')}<br>
+                                        💥 {t('predict.accident', 'Accident')}: {safe_get(car_info, 'accident_history')} |
+                                        🛡️ {t('predict.warranty', 'Warranty')}: {safe_get(car_info, 'warranty')} |
+                                        📖 {t('predict.service_book', 'Service Book')}: {safe_get(car_info, 'service_book')}<br>
+                                        🎯 {t('predict.equipment', 'Equipment')}: {safe_get(car_info, 'equipment', '-')}
                                     </span>
                                 </div>
                                 """, unsafe_allow_html=True)
@@ -1861,7 +1870,16 @@ def home_page():
                                             📏 {t('predict.mileage')}: {direct_mileage if direct_mileage not in [None, '', '-'] else 0:,} km | 
                                             ⛽ {t('predict.fuel_type')}: {safe_val(direct_fuel)} | 
                                             🎨 {t('predict.color')}: {safe_val(direct_color)}<br>
-                                            📋 {t('predict.condition')}: {safe_val(direct_condition)}
+                                            📋 {t('predict.condition')}: {safe_val(direct_condition)} |
+                                            ⚙️ {t('predict.transmission', 'Transmission')}: {safe_val(c.get('transmission', '-'))} |
+                                            🔧 {t('predict.drivetrain', 'Drivetrain')}: {safe_val(c.get('drivetrain', '-'))}<br>
+                                            🏭 {t('predict.engine_cc', 'Engine CC')}: {safe_val(c.get('engine_cc', '-'))} |
+                                            🐎 {t('predict.horsepower', 'PS')}: {safe_val(c.get('horsepower', '-'))} |
+                                            🌿 {t('predict.emissions', 'Emissions')}: {safe_val(c.get('emissions_class', '-'))}<br>
+                                            💥 {t('predict.accident', 'Accident')}: {safe_val(c.get('accident_history', '-'))} |
+                                            🛡️ {t('predict.warranty', 'Warranty')}: {safe_val(c.get('warranty', '-'))} |
+                                            📖 {t('predict.service_book', 'Service Book')}: {safe_val(c.get('service_book', '-'))}<br>
+                                            🎯 {t('predict.equipment', 'Equipment')}: {safe_val(c.get('equipment', '-'))}
                                         </span>
                                     </div>
                                     """, unsafe_allow_html=True)
