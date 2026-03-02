@@ -209,8 +209,35 @@ class InvoiceGenerator:
             ("Model / Modell", transaction_data.get('model', 'Unknown')),
             ("Year / Baujahr", str(transaction_data.get('manufacture_year', 'N/A'))),
             ("Mileage / KM-Stand", f"{transaction_data.get('mileage', 0):,} km"),
-            ("Condition / Zustand", transaction_data.get('condition_analysis', 'Standard'))
+            ("Condition / Zustand", transaction_data.get('condition_analysis', 'Standard')),
+            ("Fuel / Kraftstoff", transaction_data.get('fuel_type', '')),
+            ("Color / Farbe", transaction_data.get('color', '')),
         ]
+        
+        # إضافة الحقول التقنية الجديدة (فقط إذا كانت موجودة)
+        optional_details = [
+            ("Transmission / Getriebe", transaction_data.get('transmission', '')),
+            ("Drivetrain / Antrieb", transaction_data.get('drivetrain', '')),
+            ("Emissions / Abgasnorm", transaction_data.get('emissions_class', '')),
+            ("Engine CC / Hubraum", f"{transaction_data.get('engine_cc', 0)} cc" if transaction_data.get('engine_cc') else ''),
+            ("Power / Leistung", f"{transaction_data.get('horsepower', 0)} PS" if transaction_data.get('horsepower') else ''),
+            ("Accidents / Unfälle", transaction_data.get('accident_history', '')),
+            ("Warranty / Garantie", transaction_data.get('warranty', '')),
+            ("Service Book / Scheckheft", transaction_data.get('service_book', '')),
+        ]
+        for label, value in optional_details:
+            if value:
+                details.append((label, str(value)))
+        
+        # التجهيزات
+        equip_raw = transaction_data.get('equipment', [])
+        if isinstance(equip_raw, str):
+            try:
+                equip_raw = json.loads(equip_raw)
+            except (json.JSONDecodeError, TypeError):
+                equip_raw = []
+        if equip_raw:
+            details.append(("Equipment / Ausstattung", ", ".join(equip_raw)))
 
         for label, value in details:
             pdf.cell(50, 8, f"{label}:", border=0)
@@ -301,6 +328,16 @@ class InvoiceGenerator:
             'buyer_signature': {'en': 'Buyer Signature', 'de': 'Unterschrift Käufer', 'ar': 'توقيع المشتري'},
             'seller_signature': {'en': 'Seller Signature', 'de': 'Unterschrift Verkäufer', 'ar': 'توقيع البائع'},
             'date': {'en': 'Date', 'de': 'Datum', 'ar': 'التاريخ'},
+            # Vehicle technical fields
+            'transmission': {'en': 'Transmission', 'de': 'Transmission', 'ar': 'ناقل الحركة'},
+            'drivetrain': {'en': 'Drivetrain', 'de': 'Drivetrain', 'ar': 'نظام الدفع'},
+            'emissions': {'en': 'Emissions', 'de': 'Emissions', 'ar': 'الانبعاثات'},
+            'engine_cc': {'en': 'Engine CC', 'de': 'Hubraum', 'ar': 'سعة المحرك'},
+            'horsepower': {'en': 'Horsepower', 'de': 'Leistung', 'ar': 'القوة الحصانية'},
+            'accident_history': {'en': 'Accident History', 'de': 'Unfallhistorie', 'ar': 'سجل الحوادث'},
+            'warranty': {'en': 'Warranty', 'de': 'Garantie', 'ar': 'الضمان'},
+            'service_book': {'en': 'Service Book', 'de': 'Serviceheft', 'ar': 'دفتر الصيانة'},
+            'equipment': {'en': 'Equipment', 'de': 'Ausstattung', 'ar': 'التجهيزات'},
         }
         
         def L(key):
@@ -417,6 +454,31 @@ class InvoiceGenerator:
             (L('mileage'), f"{contract_data.get('mileage', 0):,} km"),
             (L('condition'), translate_value(condition_val, lang)),
         ]
+        
+        # إضافة الحقول التقنية الجديدة للعقد
+        optional_vehicle = [
+            (L('transmission'), contract_data.get('transmission', '')),
+            (L('drivetrain'), contract_data.get('drivetrain', '')),
+            (L('emissions'), contract_data.get('emissions_class', '')),
+            (L('engine_cc'), f"{contract_data.get('engine_cc', 0)} cc" if contract_data.get('engine_cc') else ''),
+            (L('horsepower'), f"{contract_data.get('horsepower', 0)} PS" if contract_data.get('horsepower') else ''),
+            (L('accident_history'), contract_data.get('accident_history', '')),
+            (L('warranty'), contract_data.get('warranty', '')),
+            (L('service_book'), contract_data.get('service_book', '')),
+        ]
+        for label, value in optional_vehicle:
+            if value:
+                vehicle_fields.append((label, str(value)))
+        
+        # التجهيزات
+        equip_raw = contract_data.get('equipment', [])
+        if isinstance(equip_raw, str):
+            try:
+                equip_raw = json.loads(equip_raw)
+            except (json.JSONDecodeError, TypeError):
+                equip_raw = []
+        if equip_raw:
+            vehicle_fields.append(('Equipment', ', '.join(equip_raw)))
         
         for label, value in vehicle_fields:
             pdf.cell(60, 6, fix_arabic(f"{label}:"), border=0)
@@ -689,42 +751,102 @@ class InvoiceGenerator:
         pdf.set_text_color(0, 0, 0)
         pdf.ln(15)
         
-        # ===== Footer =====
-        pdf.set_y(-55)
-        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-        pdf.ln(5)
-        pdf.set_font(font_name, '', 9)
+        # ===== Section 6: Signatures =====
+        pdf.add_page()
         
-        # Get translated footer text
+        # Helper for contract text
         def get_contract_text(key):
             text = t(key)
             return fix_arabic(text) if is_rtl else text
         
-        pdf.cell(0, 6, get_contract_text('contract.footer_text'), ln=True, align='C')
+        # Section 6 banner
+        pdf.set_fill_color(33, 37, 41)  # Dark banner
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_font(font_name, 'B', 12)
+        pdf.cell(0, 10, f"  SECTION 6: {get_contract_text('contract.signatures_title')}", ln=True, fill=True)
+        pdf.set_text_color(0, 0, 0)
         pdf.ln(5)
+        
+        # Legally binding notice
+        pdf.set_font(font_name, '', 10)
+        pdf.set_text_color(100, 100, 100)
+        pdf.multi_cell(0, 6, get_contract_text('contract.footer_text'), align='C')
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln(8)
+        
+        # Date and Place row
+        pdf.set_font(font_name, '', 11)
+        today_str = datetime.now().strftime('%d.%m.%Y')
+        
+        # Date field
+        pdf.cell(95, 8, f"{get_contract_text('contract.date')}: {today_str}", border='B')
+        # Place field
+        pdf.cell(95, 8, f"{get_contract_text('contract.place')}: ____________________________", border='B', ln=True)
+        pdf.ln(15)
         
         # Get buyer and seller names
         buyer_name = user_data.get('full_name', 'N/A')
         seller_name = Config.APP_NAME
-        
-        # Signature lines with names
-        pdf.cell(90, 6, "_________________________", align='C')
-        pdf.cell(0, 6, "_________________________", align='C', ln=True)
-        
-        # Labels
-        pdf.set_font(font_name, '', 9)
-        pdf.cell(90, 5, get_contract_text('contract.buyer_signature'), align='C')
-        pdf.cell(0, 5, get_contract_text('contract.seller_signature'), align='C', ln=True)
-        
-        # Names
-        pdf.set_font(font_name, 'B', 9)
-        # Always apply fix_arabic to handle Arabic names
         buyer_display = fix_arabic(buyer_name)
-        pdf.cell(90, 5, buyer_display, align='C')
-        pdf.cell(0, 5, seller_name, align='C', ln=True)
         
-        # التذييل يُدار تلقائياً بواسطة ContractPDF.footer() 
-        # لا حاجة لإضافة خط تذييل إضافي هنا
+        # ---- Buyer Signature Box ----
+        box_y = pdf.get_y()
+        # Left box - Buyer
+        pdf.set_fill_color(248, 249, 250)
+        pdf.rect(10, box_y, 90, 55, 'FD')
+        pdf.set_xy(15, box_y + 5)
+        pdf.set_font(font_name, 'B', 11)
+        pdf.cell(80, 6, get_contract_text('contract.buyer_signature'), align='C', ln=True)
+        pdf.set_xy(15, box_y + 14)
+        pdf.set_font(font_name, '', 10)
+        pdf.cell(80, 5, f"({buyer_display})", align='C', ln=True)
+        # Signature line inside box
+        pdf.set_xy(20, box_y + 38)
+        pdf.cell(70, 0, "", border='T')  # Horizontal line
+        pdf.set_xy(15, box_y + 42)
+        pdf.set_font(font_name, '', 8)
+        pdf.set_text_color(120, 120, 120)
+        pdf.cell(80, 5, get_contract_text('contract.sign_here'), align='C')
+        pdf.set_text_color(0, 0, 0)
+        
+        # Right box - Seller
+        pdf.rect(110, box_y, 90, 55, 'FD')
+        pdf.set_xy(115, box_y + 5)
+        pdf.set_font(font_name, 'B', 11)
+        pdf.cell(80, 6, get_contract_text('contract.seller_signature'), align='C', ln=True)
+        pdf.set_xy(115, box_y + 14)
+        pdf.set_font(font_name, '', 10)
+        pdf.cell(80, 5, f"({seller_name})", align='C', ln=True)
+        # Signature line inside box
+        pdf.set_xy(120, box_y + 38)
+        pdf.cell(70, 0, "", border='T')  # Horizontal line
+        pdf.set_xy(115, box_y + 42)
+        pdf.set_font(font_name, '', 8)
+        pdf.set_text_color(120, 120, 120)
+        pdf.cell(80, 5, get_contract_text('contract.sign_here'), align='C')
+        pdf.set_text_color(0, 0, 0)
+        
+        # Move below the boxes
+        pdf.set_y(box_y + 65)
+        
+        # ---- Witness Section (optional) ----
+        pdf.ln(5)
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(8)
+        pdf.set_font(font_name, 'B', 10)
+        pdf.cell(0, 6, get_contract_text('contract.witness_title'), ln=True)
+        pdf.ln(3)
+        pdf.set_font(font_name, '', 10)
+        # Witness name and signature
+        pdf.cell(95, 8, f"{get_contract_text('contract.witness_name')}: ____________________________", border='B')
+        pdf.cell(95, 8, f"{get_contract_text('contract.witness_signature')}: ____________________________", border='B', ln=True)
+        pdf.ln(15)
+        
+        # Final footer note
+        pdf.set_font(font_name, '', 8)
+        pdf.set_text_color(120, 120, 120)
+        pdf.cell(0, 5, get_contract_text('contract.contract_copies_note'), ln=True, align='C')
+        pdf.set_text_color(0, 0, 0)
         
         pdf.output(str(file_path))
         return str(file_path)

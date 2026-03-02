@@ -86,6 +86,7 @@ class DatabaseManager:
             
             # إضافة الأعمدة الجديدة للتوافق مع قواعد البيانات القديمة
             new_columns = [
+                ('full_name', 'TEXT'),
                 ('phone', 'TEXT'), ('id_number', 'TEXT'), ('nationality', 'TEXT'),
                 ('birth_date', 'TEXT'), ('expiry_date', 'TEXT'), ('license_number', 'TEXT'),
                 ('license_type', 'TEXT'), ('license_expiry', 'TEXT'), ('issue_date', 'TEXT'),
@@ -117,13 +118,23 @@ class DatabaseManager:
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )''')
             
-            # إضافة أعمدة جديدة لجدول المعاملات (نوع الوقود، الحالة، اللون، نسبة الربح، الموظف)
+            # إضافة أعمدة جديدة لجدول المعاملات (نوع الوقود، الحالة، اللون، نسبة الربح، الموظف + المواصفات التقنية)
             trans_new_columns = [
                 ('fuel_type', 'TEXT'),
                 ('condition', 'TEXT'),
                 ('color', 'TEXT'),
                 ('profit_margin', 'REAL'),  # نسبة الربح عند البيع
-                ('employee_id', 'INTEGER')  # الموظف الذي أجرى البيع
+                ('employee_id', 'INTEGER'),  # الموظف الذي أجرى البيع
+                # الحقول التقنية الجديدة
+                ('transmission', 'TEXT'),
+                ('drivetrain', 'TEXT'),
+                ('emissions_class', 'TEXT'),
+                ('engine_cc', 'INTEGER'),
+                ('horsepower', 'INTEGER'),
+                ('accident_history', 'TEXT'),
+                ('warranty', 'TEXT'),
+                ('service_book', 'TEXT'),
+                ('equipment', 'TEXT'),  # JSON list of equipment items
             ]
             for col_name, col_type in trans_new_columns:
                 try:
@@ -405,16 +416,13 @@ class DatabaseManager:
 
     # ===== 2. سجلات العمليات والإحصائيات =====
 
-    def create_transaction(self, user_id: int, car_data: Dict, estimated_price: float, condition_analysis: Dict, car_image_bytes: bytes = None) -> int:
-        """إنشاء سجل معاملة جديد وحفظ البيانات"""
+    def create_transaction(self, user_id: int, car_data: Dict, estimated_price: float, condition_analysis: Dict, car_image_bytes: bytes = None, employee_id: int = None) -> int:
+        """إنشاء سجل معاملة جديد وحفظ البيانات مع ربط الموظف للعمولة"""
         import base64
         
         # تحويل الصورة إلى base64 إذا وجدت
         image_path = None
         if car_image_bytes:
-            # هنا يمكنك حفظ الصورة في ملف فعلي، لكن للتبسيط سنقوم بتخزين مسار نصي أو تجاهلها حالياً
-            # في التطبيق الحقيقي، يجب حفظ الصورة في مجلد static/uploads
-            # سنقوم فقط بتخزين نص يدل على وجود صورة
             image_path = "stored_in_session" 
 
         # جلب نسبة الربح الحالية لحفظها مع المعاملة
@@ -422,12 +430,18 @@ class DatabaseManager:
 
         with self.get_connection() as conn:
             cursor = conn.cursor()
+            # تحويل قائمة التجهيزات إلى JSON
+            equipment_json = json.dumps(car_data.get('equipment', []), ensure_ascii=False) if car_data.get('equipment') else '[]'
+
             cursor.execute('''
                 INSERT INTO transactions (
                     user_id, car_type, brand, model, manufacture_year, 
                     mileage, estimated_price, condition_analysis, image_path,
-                    fuel_type, condition, color, profit_margin
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    fuel_type, condition, color, profit_margin,
+                    transmission, drivetrain, emissions_class, engine_cc,
+                    horsepower, accident_history, warranty, service_book, equipment,
+                    employee_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 user_id,
                 car_data.get('car_type', 'Unknown'),
@@ -441,9 +455,41 @@ class DatabaseManager:
                 car_data.get('fuel_type', ''),
                 car_data.get('condition', ''),
                 car_data.get('color', ''),
-                float(current_profit_margin)  # نسبة الربح عند البيع
+                float(current_profit_margin),  # نسبة الربح عند البيع
+                car_data.get('transmission', ''),
+                car_data.get('drivetrain', ''),
+                car_data.get('emissions_class', ''),
+                car_data.get('engine_cc', 0),
+                car_data.get('horsepower', 0),
+                car_data.get('accident_history', ''),
+                car_data.get('warranty', ''),
+                car_data.get('service_book', ''),
+                equipment_json,
+                employee_id
             ))
             return cursor.lastrowid
+    
+    def get_employee_by_user_id(self, user_id: int) -> Dict:
+        """جلب سجل الموظف المرتبط بحساب مستخدم معين"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM employees WHERE user_id = ? AND is_active = 1', (user_id,))
+            row = cursor.fetchone()
+            if row:
+                return dict(row)
+            
+            # فحص بديل: مطابقة عبر الإيميل
+            cursor.execute('SELECT email FROM users WHERE id = ?', (user_id,))
+            user_row = cursor.fetchone()
+            if user_row and user_row['email']:
+                cursor.execute('SELECT * FROM employees WHERE email = ? AND is_active = 1', (user_row['email'],))
+                emp_row = cursor.fetchone()
+                if emp_row:
+                    # ربط الموظف بالمستخدم للمستقبل
+                    cursor.execute('UPDATE employees SET user_id = ? WHERE id = ?', (user_id, emp_row['id']))
+                    return dict(emp_row)
+            
+            return None
 
     def update_transaction_invoice(self, transaction_id: int, invoice_path: str):
         """تحديث مسار الفاتورة للمعاملة"""
@@ -469,7 +515,7 @@ class DatabaseManager:
         if not updates:
             return False
         
-        allowed_fields = {'car_type', 'brand', 'model', 'manufacture_year', 'mileage', 'estimated_price', 'condition_analysis', 'fuel_type', 'condition', 'color'}
+        allowed_fields = {'car_type', 'brand', 'model', 'manufacture_year', 'mileage', 'estimated_price', 'condition_analysis', 'fuel_type', 'condition', 'color', 'transmission', 'drivetrain', 'emissions_class', 'engine_cc', 'horsepower', 'accident_history', 'warranty', 'service_book', 'equipment'}
         update_parts = []
         params = []
         
@@ -504,22 +550,61 @@ class DatabaseManager:
             return [dict(row) for row in cursor.fetchall()]
 
     def get_user_contracts(self, user_id: int) -> List[Dict]:
-        """جلب العقود النشطة للمستخدم (محاكاة من المعاملات)"""
-        transactions = self.get_user_transactions(user_id)
-        contracts = []
-        for t in transactions:
-            # محاكاة بيانات العقد من المعاملة
-            contract = {
-                'id': t['id'],
-                'user_id': t['user_id'],
-                'car_details': json.dumps({'brand': t.get('brand', 'Unknown'), 'model': t.get('model', 'Unknown')}),
-                'total_amount': t.get('estimated_price', 0),
-                'paid_amount': 0, # لم يتم تفعيل الدفع بعد
-                'status': 'active',
-                'created_at': t.get('created_at')
-            }
-            contracts.append(contract)
-        return contracts
+        """جلب العقود النشطة للمستخدم من جدول العقود الحقيقي"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # أولاً: محاولة جلب العقود من جدول contracts الحقيقي
+            cursor.execute('''
+                SELECT c.*, t.brand, t.model, t.car_type, t.manufacture_year,
+                       t.mileage, t.fuel_type, t.color, t.condition,
+                       t.transmission, t.drivetrain, t.emissions_class,
+                       t.engine_cc, t.horsepower, t.equipment
+                FROM contracts c
+                LEFT JOIN transactions t ON c.transaction_id = t.id
+                WHERE c.user_id = ?
+                ORDER BY c.created_at DESC
+            ''', (user_id,))
+            rows = cursor.fetchall()
+            
+            if rows:
+                contracts = []
+                for row in rows:
+                    contract = dict(row)
+                    # حساب المبلغ المدفوع من جدول الدفعات
+                    cursor.execute('''
+                        SELECT COALESCE(SUM(amount), 0) as total_paid
+                        FROM payments WHERE contract_id = ? AND status IN ('verified', 'pending')
+                    ''', (contract['id'],))
+                    paid_row = cursor.fetchone()
+                    contract['paid_amount'] = paid_row['total_paid'] if paid_row else 0
+                    # بناء car_details JSON إذا لم يكن موجوداً
+                    if not contract.get('car_details'):
+                        contract['car_details'] = json.dumps({
+                            'brand': contract.get('brand', 'Unknown'),
+                            'model': contract.get('model', 'Unknown')
+                        }, ensure_ascii=False)
+                    # total_amount للتوافق مع الكود القديم
+                    if not contract.get('total_amount'):
+                        contract['total_amount'] = contract.get('total_price', 0)
+                    contracts.append(contract)
+                return contracts
+            
+            # Fallback: إذا لم تُوجد عقود حقيقية، نبني من المعاملات
+            transactions = self.get_user_transactions(user_id)
+            contracts = []
+            for t in transactions:
+                contract = {
+                    'id': t['id'],
+                    'user_id': t['user_id'],
+                    'car_details': json.dumps({'brand': t.get('brand', 'Unknown'), 'model': t.get('model', 'Unknown')}, ensure_ascii=False),
+                    'total_amount': t.get('estimated_price', 0),
+                    'paid_amount': 0,
+                    'status': 'active',
+                    'created_at': t.get('created_at')
+                }
+                contracts.append(contract)
+            return contracts
 
     def get_all_contracts_with_users(self) -> List[Dict]:
         """جلب جميع العقود مع بيانات المستخدمين للوحة الإدارة"""
@@ -543,10 +628,15 @@ class DatabaseManager:
             return contracts
 
     def get_contract_payments(self, contract_id: int) -> List[Dict]:
-        """جلب سجل الدفعات لعقد معين (محاكاة - لا يوجد جدول دفعات حالياً)"""
-        # حالياً نرجع قائمة فارغة لأن جدول الدفعات غير موجود
-        # يمكن إنشاء جدول payments لاحقاً
-        return []
+        """جلب سجل الدفعات لعقد معين من جدول payments"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM payments 
+                WHERE contract_id = ? 
+                ORDER BY created_at DESC
+            ''', (contract_id,))
+            return [dict(row) for row in cursor.fetchall()]
     
     def delete_transaction(self, transaction_id: int) -> bool:
         """حذف معاملة من قاعدة البيانات"""
@@ -1073,9 +1163,28 @@ class DatabaseManager:
 
 
     def add_payment(self, contract_id: int, amount: float, method: str, proof_path: str, ref: str) -> int:
-        """إضافة دفعة جديدة في جدول payments"""
+        """إضافة دفعة جديدة في جدول payments مع منع التكرار"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
+            
+            # === منع الدفع المكرر ===
+            # التحقق من عدم وجود دفعة بنفس المبلغ للعقد نفسه خلال آخر 24 ساعة
+            cursor.execute('''
+                SELECT id, status FROM payments 
+                WHERE contract_id = ? AND amount = ? 
+                AND status IN ('verified', 'pending')
+                AND created_at >= datetime('now', '-24 hours')
+                ORDER BY created_at DESC LIMIT 1
+            ''', (contract_id, amount))
+            existing = cursor.fetchone()
+            
+            if existing:
+                # دفعة مكررة - إرجاع ID الدفعة الموجودة
+                Config.logger.warning(
+                    f"⚠️ Duplicate payment prevented: contract={contract_id}, "
+                    f"amount={amount}, existing_id={existing['id']}, status={existing['status']}"
+                )
+                return existing['id']
             
             # التحقق من وجود العقد أولاً، وإنشاء سجل مؤقت إذا لم يكن موجوداً
             cursor.execute("SELECT id FROM contracts WHERE id = ?", (contract_id,))
@@ -1100,6 +1209,58 @@ class DatabaseManager:
             
             return payment_id
 
+    def get_next_pending_installment(self, contract_id: int) -> dict:
+        """جلب رقم القسط التالي المطلوب دفعه مع بياناته"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # جلب أول فاتورة معلقة مرتبة بتاريخ الاستحقاق
+            cursor.execute('''
+                SELECT id, invoice_number, installment_number, amount_due, due_date, status
+                FROM invoices 
+                WHERE contract_id = ? AND status = 'pending'
+                ORDER BY installment_number ASC
+                LIMIT 1
+            ''', (contract_id,))
+            row = cursor.fetchone()
+            
+            if row:
+                return dict(row)
+            
+            # إذا لم يكن هناك فواتير، نحسب من الدفعات
+            cursor.execute('''
+                SELECT COUNT(*) as paid_count FROM payments 
+                WHERE contract_id = ? AND status = 'verified'
+            ''', (contract_id,))
+            paid_count = cursor.fetchone()['paid_count']
+            
+            # جلب عدد الأقساط الكلي من العقد
+            cursor.execute('''
+                SELECT installment_count, total_amount, down_payment 
+                FROM contracts WHERE id = ?
+            ''', (contract_id,))
+            contract = cursor.fetchone()
+            
+            if contract and contract['installment_count']:
+                total_installments = contract['installment_count']
+                if paid_count >= total_installments:
+                    return {'completed': True, 'message': 'All installments paid'}
+                
+                next_num = paid_count + 1
+                total = contract['total_amount'] or 0
+                dp = contract['down_payment'] or 0
+                monthly = (total - dp) / total_installments if total_installments > 0 else 0
+                
+                return {
+                    'installment_number': next_num,
+                    'total_installments': total_installments,
+                    'amount_due': monthly,
+                    'paid_count': paid_count,
+                    'completed': False
+                }
+            
+            return None
+
     def verify_payment(self, payment_id: int) -> bool:
         """تأكيد دفعة وتحديث حالتها"""
         with self.get_connection() as conn:
@@ -1121,9 +1282,31 @@ class DatabaseManager:
 
     def update_contract_schedule(self, contract_id: int, **kwargs) -> bool:
         """تحديث جدولة العقد (موعد الدفع، فترة السماح، التأجيل)"""
-        # placeholder - في التطبيق الحقيقي يجب تحديث جدول العقود
-        # المعاملات المتوقعة: due_day, grace, next_date, reason
-        return True
+        allowed_fields = {
+            'due_day': 'payment_due_day',
+            'grace': 'grace_period_days',
+            'next_date': 'next_payment_date',
+            'reason': 'reschedule_reason'
+        }
+        
+        update_parts = []
+        params = []
+        for key, col in allowed_fields.items():
+            if key in kwargs and kwargs[key] is not None:
+                update_parts.append(f"{col} = ?")
+                params.append(kwargs[key])
+        
+        if not update_parts:
+            return False
+        
+        params.append(contract_id)
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(f'''
+                UPDATE contracts SET {', '.join(update_parts)}
+                WHERE id = ?
+            ''', params)
+            return cursor.rowcount > 0
 
     def get_user_payment_preferences(self, user_id: int) -> Optional[Dict]:
         """جلب تفضيلات الدفع المحفوظة للمستخدم من آخر عقد"""

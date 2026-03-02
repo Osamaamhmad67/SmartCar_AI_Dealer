@@ -23,8 +23,6 @@ _translations_cache = {}
 
 def load_translations(lang: str, force_reload: bool = False) -> dict:
     global _translations_cache
-    # إعادة تحميل الترجمات دائماً لضمان ظهور التحديثات
-    force_reload = True
     if lang in _translations_cache and not force_reload:
         return _translations_cache[lang]
     

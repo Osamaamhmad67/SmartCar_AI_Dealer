@@ -1,19 +1,35 @@
 """
-utils/__init__.py - Utilities package initialization
+utils/__init__.py - Utilities package initialization (Lazy Loading)
+تم تحسين الاستيرادات لتحميل المكونات عند الحاجة فقط
 """
 
-from .validation import ImageValidator, validate_car_image
-from .pdf_generator import PDFGenerator as PDFBaseGenerator
-from .invoice_generator import InvoiceGenerator
-from .installment_invoice import InstallmentInvoiceGenerator
-from .notifier import NotificationManager
-from .cache_manager import CacheManager
-from .ocr_scanner import DocumentScanner
-from .payment_processor import PaymentProcessor
-from .cleanup import ImageCleanupManager
-from .logger import setup_logger
-from .general_utils import GeneralUtils
-from .predictor import PricePredictor
+
+def __getattr__(name):
+    """Lazy import: يتم تحميل كل مكون فقط عند استدعائه"""
+    _imports = {
+        'ImageValidator': ('.validation', 'ImageValidator'),
+        'validate_car_image': ('.validation', 'validate_car_image'),
+        'PDFBaseGenerator': ('.pdf_generator', 'PDFGenerator'),
+        'InvoiceGenerator': ('.invoice_generator', 'InvoiceGenerator'),
+        'InstallmentInvoiceGenerator': ('.installment_invoice', 'InstallmentInvoiceGenerator'),
+        'NotificationManager': ('.notifier', 'NotificationManager'),
+        'CacheManager': ('.cache_manager', 'CacheManager'),
+        'DocumentScanner': ('.ocr_scanner', 'DocumentScanner'),
+        'PaymentProcessor': ('.payment_processor', 'PaymentProcessor'),
+        'ImageCleanupManager': ('.cleanup', 'ImageCleanupManager'),
+        'setup_logger': ('.logger', 'setup_logger'),
+        'GeneralUtils': ('.general_utils', 'GeneralUtils'),
+        'PricePredictor': ('.predictor', 'PricePredictor'),
+    }
+
+    if name in _imports:
+        module_path, attr_name = _imports[name]
+        import importlib
+        module = importlib.import_module(module_path, __package__)
+        return getattr(module, attr_name)
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     'ImageValidator',

@@ -199,12 +199,21 @@ class PaymentProcessor:
             return [dict(row) for row in cursor.fetchall()]
 
     def mark_invoice_paid(self, invoice_id: int, amount: float) -> bool:
-        """تسجيل دفع فاتورة"""
+        """تسجيل دفع فاتورة مع منع التكرار"""
         with self.db.get_connection() as conn:
+            # التحقق من حالة الفاتورة أولاً
+            existing = conn.execute(
+                'SELECT status FROM invoices WHERE id = ?', (invoice_id,)
+            ).fetchone()
+            
+            if existing and existing['status'] == 'paid':
+                # الفاتورة مدفوعة بالفعل - لا تكرر
+                return False
+            
             conn.execute('''
                 UPDATE invoices 
                 SET amount_paid = ?, status = 'paid', payment_date = date('now')
-                WHERE id = ?
+                WHERE id = ? AND status != 'paid'
             ''', (amount, invoice_id))
             return True
 
