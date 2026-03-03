@@ -1173,11 +1173,11 @@ EUR{amount_to_pay:.2f}
                              with dl_c2:
                                  import base64
                                  b64 = base64.b64encode(pdf_bytes).decode()
-                                 st.markdown(f"""
+                                 components.html(f"""
                                  <a href="data:application/pdf;base64,{b64}" target="_blank"
-                                    style="display:inline-block;width:100%;text-align:center;padding:8px;background:#D4AF37;color:black;border-radius:8px;text-decoration:none;font-weight:bold;">
+                                    style="display:inline-block;width:100%;text-align:center;padding:8px;background:#D4AF37;color:black;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;">
                                     🖨️ {t('buttons.print', 'Print')}
-                                 </a>""", unsafe_allow_html=True)
+                                 </a>""", height=45)
 
                 with col_invoice:
                     if st.button(f"🧾 {t('admin.invoice')}", key="chk_pref_invoice", use_container_width=True):
@@ -1248,11 +1248,11 @@ EUR{amount_to_pay:.2f}
                              with dl_i2:
                                  import base64
                                  b64_inv = base64.b64encode(pdf_bytes_inv).decode()
-                                 st.markdown(f"""
+                                 components.html(f"""
                                  <a href="data:application/pdf;base64,{b64_inv}" target="_blank"
-                                    style="display:inline-block;width:100%;text-align:center;padding:8px;background:#D4AF37;color:black;border-radius:8px;text-decoration:none;font-weight:bold;">
+                                    style="display:inline-block;width:100%;text-align:center;padding:8px;background:#D4AF37;color:black;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;">
                                     🖨️ {t('buttons.print', 'Print')}
-                                 </a>""", unsafe_allow_html=True)
+                                 </a>""", height=45)
 
                 # --- زر التأكيد (يظهر للكل) ---
                 st.write("---")
