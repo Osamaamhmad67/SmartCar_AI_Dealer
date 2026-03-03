@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartCar AI-Dealer - Changes Report</title>
+    <style>
+        @page { size: A4; margin: 15mm; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 11px; color: #222; line-height: 1.5; direction: ltr; }
+        .header { text-align: center; border-bottom: 3px solid #D4AF37; padding-bottom: 10px; margin-bottom: 15px; }
+        .header h1 { font-size: 20px; color: #1a1a2e; }
+        .header p { color: #666; font-size: 11px; }
+        .section { margin-bottom: 12px; page-break-inside: avoid; }
+        .section h2 { font-size: 14px; color: #D4AF37; border-bottom: 1px solid #eee; padding-bottom: 3px; margin-bottom: 6px; }
+        .section h3 { font-size: 12px; color: #1a1a2e; margin: 6px 0 3px; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 8px; }
+        th { background: #1a1a2e; color: white; padding: 5px 8px; text-align: left; }
+        td { padding: 4px 8px; border-bottom: 1px solid #eee; }
+        tr:nth-child(even) { background: #f8f8f8; }
+        .badge { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 9px; font-weight: bold; color: white; }
+        .new { background: #27ae60; }
+        .modified { background: #3498db; }
+        .commit { background: #f5f5f5; padding: 5px 10px; border-left: 3px solid #D4AF37; margin: 4px 0; font-family: monospace; font-size: 10px; }
+        .footer { text-align: center; border-top: 2px solid #D4AF37; padding-top: 8px; margin-top: 15px; color: #999; font-size: 9px; }
+        .two-col { display: flex; gap: 15px; }
+        .two-col > div { flex: 1; }
+        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🏎️ SmartCar AI-Dealer — Changes Report</h1>
+    <p>All modifications from 02.03.2026 – 03.03.2026 | Total: 28 Features | ~4,000+ lines of code</p>
+</div>
+
+<!-- SESSION 1: Yesterday -->
+<div class="section">
+    <h2>📅 Session 1 — 02.03.2026 (Features 1-4 + Transaction Card)</h2>
+    <table>
+        <tr><th>#</th><th>Feature</th><th>File(s)</th><th>Type</th><th>Details</th></tr>
+        <tr><td>1</td><td>📊 Advanced Dashboard</td><td>admin_page.py</td><td><span class="badge modified">MOD</span></td><td>5 Plotly charts: Monthly Revenue, Price Distribution, Top Models, Employee Ranking, Quick Stats</td></tr>
+        <tr><td>2</td><td>📧 Auto Notifications</td><td>notifier.py</td><td><span class="badge modified">MOD</span></td><td>Installment reminders, TÜV expiry alerts, batch reminder runner, admin trigger button</td></tr>
+        <tr><td>3</td><td>🚗 Car Inventory</td><td>inventory_page.py</td><td><span class="badge new">NEW</span></td><td>Card grid view, brand/status/price filters, admin status management (available/reserved/sold)</td></tr>
+        <tr><td>4</td><td>💬 AI Chatbot</td><td>chatbot_component.py</td><td><span class="badge new">NEW</span></td><td>Floating sidebar chatbot, quick-reply buttons, Groq AI integration, chat history</td></tr>
+        <tr><td>—</td><td>📋 Transaction Card</td><td>home_page.py</td><td><span class="badge modified">MOD</span></td><td>Added 9 new fields: Transmission, Drivetrain, Engine CC, PS, Emissions, Accident, Warranty, Service Book, Equipment</td></tr>
+    </table>
+    <div class="commit">git commit: feat: show all car specs in transaction card</div>
+</div>
+
+<!-- SESSION 2: Today Batch 1 -->
+<div class="section">
+    <h2>📅 Session 2 — 03.03.2026 (Features 5-12)</h2>
+    <table>
+        <tr><th>#</th><th>Feature</th><th>File(s)</th><th>Type</th><th>Details</th></tr>
+        <tr><td>5</td><td>🖨️ Direct Print</td><td>checkout_pages.py</td><td><span class="badge modified">MOD</span></td><td>Browser print via window.print() with base64 PDF, alongside download buttons for contracts & invoices</td></tr>
+        <tr><td>6</td><td>📷 360° Image Analysis</td><td>predict_pages.py</td><td><span class="badge modified">MOD</span></td><td>Expanded from 3 to 5 upload angles: Front, Side, Interior + Rear, Engine</td></tr>
+        <tr><td>7</td><td>📋 Audit Log</td><td>audit_logger.py</td><td><span class="badge new">NEW</span></td><td>audit_log table, log/get_logs/get_stats methods, admin viewer with color-coded actions & filters</td></tr>
+        <tr><td>8</td><td>🔗 DATEV Export</td><td>datev_export.py</td><td><span class="badge new">NEW</span></td><td>German accounting CSV format, transactions & invoices export, DATEV column standard</td></tr>
+        <tr><td>9</td><td>🌐 Public Showcase</td><td>showcase_page.py</td><td><span class="badge new">NEW</span></td><td>Public car listing, brand search, price filter, sorting, premium card layout with all specs</td></tr>
+        <tr><td>10</td><td>📈 Demand Forecast</td><td>admin_page.py</td><td><span class="badge modified">MOD</span></td><td>Moving average forecast chart with 3-month prediction, bar + dash-line visualization</td></tr>
+        <tr><td>11</td><td>🔐 2FA Authentication</td><td>two_factor.py</td><td><span class="badge new">NEW</span></td><td>TOTP via pyotp, QR code generation, verify/enable/disable, auto DB migration</td></tr>
+        <tr><td>12</td><td>🔍 Market Comparison</td><td>market_compare.py</td><td><span class="badge new">NEW</span></td><td>Compare against DB (same brand ±2yr ±30k km), position analysis (below/fair/above market)</td></tr>
+    </table>
+    <div class="commit">git commit: feat: add direct print, 360 images, audit log, DATEV export, showcase, demand forecast, 2FA, market compare</div>
+</div>
+
+<!-- SESSION 2: Today Batch 2 -->
+<div class="section">
+    <h2>📅 Session 2 — 03.03.2026 (Features 13-20)</h2>
+    <table>
+        <tr><th>#</th><th>Feature</th><th>File(s)</th><th>Type</th><th>Details</th></tr>
+        <tr><td>13</td><td>📱 WhatsApp</td><td>whatsapp_sender.py</td><td><span class="badge new">NEW</span></td><td>wa.me links for installment reminders, TÜV alerts, welcome messages (German)</td></tr>
+        <tr><td>14</td><td>📊 Monthly Reports</td><td>report_generator.py</td><td><span class="badge new">NEW</span></td><td>Monthly summary with revenue, growth %, top brands, formatted German text output</td></tr>
+        <tr><td>15</td><td>🗓️ Appointment System</td><td>appointments_page.py</td><td><span class="badge new">NEW</span></td><td>Booking form (type/date/time), status tracking, admin confirm/cancel, auto table creation</td></tr>
+        <tr><td>16</td><td>⭐ Customer Reviews</td><td>reviews_component.py</td><td><span class="badge new">NEW</span></td><td>Star ratings (1-5), comments, avg/total stats, review form, auto table creation</td></tr>
+        <tr><td>17</td><td>📋 Contract Templates</td><td>contract_templates.py</td><td><span class="badge new">NEW</span></td><td>4 types: Kaufvertrag, Mietvertrag, Ratenkauf, Garantie — with German legal clauses</td></tr>
+        <tr><td>18</td><td>🔔 Push Notifications</td><td>notifications_bell.py</td><td><span class="badge new">NEW</span></td><td>In-app bell with badge, read/unread, push_notification() API, color-coded types</td></tr>
+        <tr><td>19</td><td>🗺️ Branch Map</td><td>branches_page.py</td><td><span class="badge new">NEW</span></td><td>Interactive st.map with 4 German cities (Berlin, München, Hamburg, Frankfurt)</td></tr>
+        <tr><td>20</td><td>📈 KPI Dashboard</td><td>admin_page.py</td><td><span class="badge modified">MOD</span></td><td>Sales/Revenue/Users targets with progress bars, configurable goals</td></tr>
+    </table>
+    <div class="commit">git commit: feat: add WhatsApp, reports, appointments, reviews, contract templates, notifications, branches, KPI dashboard</div>
+</div>
+
+<!-- SESSION 2: Today Batch 3 -->
+<div class="section">
+    <h2>📅 Session 2 — 03.03.2026 (Features 21-28)</h2>
+    <table>
+        <tr><th>#</th><th>Feature</th><th>File(s)</th><th>Type</th><th>Details</th></tr>
+        <tr><td>21</td><td>📊 Excel Export</td><td>excel_export.py</td><td><span class="badge new">NEW</span></td><td>Multi-sheet Excel: Transactions, Users, Contracts, Employees, Appointments, Audit Log</td></tr>
+        <tr><td>22</td><td>🔄 Car Pipeline</td><td>car_pipeline.py</td><td><span class="badge new">NEW</span></td><td>5 stages: Received → Inspected → Priced → Listed → Sold, stage history, visual HTML pipeline</td></tr>
+        <tr><td>23</td><td>📧 Email Templates</td><td>email_templates.py</td><td><span class="badge new">NEW</span></td><td>Professional HTML: Welcome, Invoice, Appointment Confirm, Payment Received</td></tr>
+        <tr><td>24</td><td>🧮 Finance Calculator</td><td>finance_calculator.py</td><td><span class="badge new">NEW</span></td><td>Interactive: price, down payment %, months, interest rate → monthly payment + total cost</td></tr>
+        <tr><td>25</td><td>📸 Photo Gallery</td><td>photo_gallery.py</td><td><span class="badge new">NEW</span></td><td>Thumbnails, click-to-zoom, prev/next navigation, auto-load from uploads folder</td></tr>
+        <tr><td>26</td><td>📝 Internal Notes</td><td>internal_notes.py</td><td><span class="badge new">NEW</span></td><td>Per-entity notes for employees, priority levels (normal/high/urgent), Streamlit UI</td></tr>
+        <tr><td>27</td><td>🔒 Login Tracker</td><td>login_tracker.py</td><td><span class="badge new">NEW</span></td><td>Login/logout sessions, failed attempt monitoring, active users today counter</td></tr>
+        <tr><td>28</td><td>📋 Task Management</td><td>tasks_page.py</td><td><span class="badge new">NEW</span></td><td>Create/assign tasks, priority levels, status workflow (pending → in_progress → completed)</td></tr>
+    </table>
+    <div class="commit">git commit: feat: add Excel export, car pipeline, email templates, finance calculator, photo gallery, internal notes, login tracker, task management</div>
+</div>
+
+<!-- Summary -->
+<div class="section">
+    <h2>📊 Summary Statistics</h2>
+    <div class="two-col">
+        <div>
+            <h3>Files Created/Modified</h3>
+            <table>
+                <tr><th>Category</th><th>Count</th></tr>
+                <tr><td><span class="badge new">NEW</span> Files Created</td><td><b>24</b></td></tr>
+                <tr><td><span class="badge modified">MOD</span> Files Modified</td><td><b>8</b></td></tr>
+                <tr><td>Total Lines Added</td><td><b>~4,000+</b></td></tr>
+                <tr><td>Git Commits</td><td><b>5</b></td></tr>
+            </table>
+        </div>
+        <div>
+            <h3>Modified Core Files</h3>
+            <table>
+                <tr><th>File</th><th>Changes</th></tr>
+                <tr><td>app.py</td><td>Routes + imports for 7 pages</td></tr>
+                <tr><td>sidebar.py</td><td>7 new navigation buttons</td></tr>
+                <tr><td>admin_page.py</td><td>+5 admin sections</td></tr>
+                <tr><td>checkout_pages.py</td><td>Print buttons</td></tr>
+                <tr><td>predict_pages.py</td><td>2 extra upload angles</td></tr>
+                <tr><td>home_page.py</td><td>9 new spec fields</td></tr>
+                <tr><td>notifier.py</td><td>Reminder methods</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    🏎️ SmartCar AI-Dealer — Development Report | Generated: 03.03.2026 | GitHub: github.com/Osamaamhmad67/SmartCar_AI_Dealer
+</div>
+
+</body>
+</html>
