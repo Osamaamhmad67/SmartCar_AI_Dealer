@@ -21,7 +21,7 @@ class CarPipeline:
 
     @staticmethod
     def _ensure_table():
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS car_pipeline (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +38,7 @@ class CarPipeline:
     @staticmethod
     def set_stage(transaction_id: int, stage: str, user_id: int = None, notes: str = None):
         CarPipeline._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("INSERT INTO car_pipeline (transaction_id, stage, updated_by, notes) VALUES (?,?,?,?)",
                      (transaction_id, stage, user_id, notes))
         conn.commit(); conn.close()
@@ -46,7 +46,7 @@ class CarPipeline:
     @staticmethod
     def get_current_stage(transaction_id: int) -> str:
         CarPipeline._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         row = conn.execute("SELECT stage FROM car_pipeline WHERE transaction_id=? ORDER BY updated_at DESC LIMIT 1",
                           (transaction_id,)).fetchone()
         conn.close()
@@ -55,7 +55,7 @@ class CarPipeline:
     @staticmethod
     def get_history(transaction_id: int) -> list:
         CarPipeline._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT * FROM car_pipeline WHERE transaction_id=? ORDER BY updated_at ASC",
                            (transaction_id,)).fetchall()

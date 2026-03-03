@@ -15,7 +15,7 @@ def render_global_search():
     if not query or len(query) < 2:
         return
     
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     q = f"%{query}%"
     

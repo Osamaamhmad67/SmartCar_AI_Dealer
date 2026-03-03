@@ -14,7 +14,7 @@ class DocumentArchive:
 
     @staticmethod
     def _ensure_table():
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS documents (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +35,7 @@ class DocumentArchive:
     def upload(transaction_id: int, doc_type: str, filename: str, file_data: bytes,
                uploaded_by: int = None, notes: str = None, expiry_date: str = None):
         DocumentArchive._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             INSERT INTO documents (transaction_id, doc_type, filename, file_data, file_size, uploaded_by, notes, expiry_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -45,7 +45,7 @@ class DocumentArchive:
     @staticmethod
     def get_documents(transaction_id: int) -> list:
         DocumentArchive._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT id, transaction_id, doc_type, filename, file_size, notes, expiry_date, created_at FROM documents WHERE transaction_id=? ORDER BY created_at DESC",
                            (transaction_id,)).fetchall()
@@ -54,21 +54,21 @@ class DocumentArchive:
 
     @staticmethod
     def download(doc_id: int) -> tuple:
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         row = conn.execute("SELECT filename, file_data FROM documents WHERE id=?", (doc_id,)).fetchone()
         conn.close()
         return (row[0], row[1]) if row else (None, None)
 
     @staticmethod
     def delete(doc_id: int):
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("DELETE FROM documents WHERE id=?", (doc_id,))
         conn.commit(); conn.close()
 
     @staticmethod
     def get_expiring_docs(days: int = 30) -> list:
         DocumentArchive._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         rows = conn.execute("""
             SELECT d.*, t.brand, t.model FROM documents d

@@ -25,7 +25,7 @@ def render_live_dashboard():
         st.empty()
         time.sleep(0)  # Placeholder - actual refresh via st.rerun below
     
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     
     # Row 1: Key metrics
     m1, m2, m3, m4 = st.columns(4)

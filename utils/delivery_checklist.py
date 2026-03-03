@@ -25,7 +25,7 @@ class DeliveryChecklist:
 
     @staticmethod
     def _ensure_table():
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS delivery_checklist (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,7 +42,7 @@ class DeliveryChecklist:
     @staticmethod
     def init_checklist(transaction_id: int):
         DeliveryChecklist._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         existing = conn.execute("SELECT COUNT(*) FROM delivery_checklist WHERE transaction_id=?", (transaction_id,)).fetchone()[0]
         if existing == 0:
             for key, label, desc in DeliveryChecklist.DEFAULT_ITEMS:
@@ -52,7 +52,7 @@ class DeliveryChecklist:
 
     @staticmethod
     def toggle_item(transaction_id: int, item_key: str, checked_by: str = None):
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         current = conn.execute("SELECT checked FROM delivery_checklist WHERE transaction_id=? AND item_key=?", 
                               (transaction_id, item_key)).fetchone()
         new_val = 0 if current and current[0] else 1
@@ -64,7 +64,7 @@ class DeliveryChecklist:
     def get_status(transaction_id: int) -> dict:
         DeliveryChecklist._ensure_table()
         DeliveryChecklist.init_checklist(transaction_id)
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         items = conn.execute("SELECT * FROM delivery_checklist WHERE transaction_id=?", (transaction_id,)).fetchall()
         conn.close()

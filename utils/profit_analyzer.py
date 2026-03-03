@@ -11,7 +11,7 @@ class ProfitAnalyzer:
 
     @staticmethod
     def get_car_profit(transaction_id: int) -> dict:
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         row = conn.execute("SELECT * FROM transactions WHERE id=?", (transaction_id,)).fetchone()
         conn.close()
@@ -31,7 +31,7 @@ class ProfitAnalyzer:
 
     @staticmethod
     def get_total_profit_report() -> dict:
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         c = conn.cursor()
         
         c.execute("""

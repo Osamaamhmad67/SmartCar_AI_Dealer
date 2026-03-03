@@ -20,7 +20,7 @@ def render_employee_stats(employee_id: int = None):
     </div>
     """, unsafe_allow_html=True)
     
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     
     # Personal stats
     total = conn.execute("SELECT COUNT(*) FROM transactions WHERE employee_id=?", (employee_id,)).fetchone()[0]

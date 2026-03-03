@@ -12,7 +12,7 @@ class ExcelExporter:
     @staticmethod
     def export_all_data() -> bytes:
         import pandas as pd
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:

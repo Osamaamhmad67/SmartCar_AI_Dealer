@@ -13,7 +13,7 @@ class DATEVExporter:
     @staticmethod
     def export_transactions(start_date=None, end_date=None) -> str:
         """Generate DATEV CSV content for transactions"""
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         
         query = """
@@ -74,7 +74,7 @@ class DATEVExporter:
     @staticmethod
     def export_invoices(start_date=None, end_date=None) -> str:
         """Export invoices in DATEV format"""
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         
         query = """

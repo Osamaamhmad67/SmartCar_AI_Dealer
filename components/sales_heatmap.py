@@ -12,7 +12,7 @@ def render_sales_heatmap():
     """Render sales heatmap chart"""
     st.markdown(f"### 📊 {t('heatmap.title', 'Sales Heatmap')}")
     
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     
     try:
         import pandas as pd

@@ -75,7 +75,7 @@ class RolesSystem:
     def update_user_role(user_id: int, new_role: str):
         if new_role not in RolesSystem.ROLES:
             raise ValueError(f"Invalid role: {new_role}")
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("UPDATE users SET role=? WHERE id=?", (new_role, user_id))
         conn.commit(); conn.close()
 

@@ -12,7 +12,7 @@ from config import Config
 
 def _ensure_table():
     """Create appointments table if not exists"""
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS appointments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,7 +85,7 @@ def _customer_view(user):
         
         if st.form_submit_button(f"✅ {t('appointments.submit', 'Book Appointment')}", use_container_width=True, type="primary"):
             try:
-                conn = sqlite3.connect(Config.DB_PATH)
+                conn = sqlite3.connect(Config.DATABASE_PATH)
                 conn.execute("""
                     INSERT INTO appointments (user_id, customer_name, phone, appointment_type, preferred_date, preferred_time, car_brand, notes)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -102,7 +102,7 @@ def _customer_view(user):
     st.markdown("---")
     st.subheader(f"📋 {t('appointments.my_appointments', 'My Appointments')}")
     try:
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT * FROM appointments WHERE user_id=? ORDER BY preferred_date DESC", (user['id'],)).fetchall()
         conn.close()
@@ -131,7 +131,7 @@ def _admin_view():
     status_filter = st.selectbox("Filter", ['all', 'pending', 'confirmed', 'cancelled'], key="apt_filter")
     
     try:
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         q = "SELECT * FROM appointments"
         if status_filter != 'all':
@@ -154,14 +154,14 @@ def _admin_view():
                 with c1:
                     if apt['status'] == 'pending':
                         if st.button(f"✅ Confirm", key=f"conf_{apt['id']}"):
-                            conn2 = sqlite3.connect(Config.DB_PATH)
+                            conn2 = sqlite3.connect(Config.DATABASE_PATH)
                             conn2.execute("UPDATE appointments SET status='confirmed' WHERE id=?", (apt['id'],))
                             conn2.commit(); conn2.close()
                             st.rerun()
                 with c2:
                     if apt['status'] != 'cancelled':
                         if st.button(f"❌ Cancel", key=f"canc_{apt['id']}"):
-                            conn2 = sqlite3.connect(Config.DB_PATH)
+                            conn2 = sqlite3.connect(Config.DATABASE_PATH)
                             conn2.execute("UPDATE appointments SET status='cancelled' WHERE id=?", (apt['id'],))
                             conn2.commit(); conn2.close()
                             st.rerun()

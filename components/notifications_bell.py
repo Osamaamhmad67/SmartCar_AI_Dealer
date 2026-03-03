@@ -10,7 +10,7 @@ from utils.i18n import t
 
 
 def _ensure_notifications_table():
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS notifications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,7 +29,7 @@ def _ensure_notifications_table():
 def push_notification(user_id: int, title: str, message: str, notif_type: str = 'info'):
     """Create a new notification for a user"""
     _ensure_notifications_table()
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     conn.execute("INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)",
                  (user_id, title, message, notif_type))
     conn.commit()
@@ -44,7 +44,7 @@ def render_notification_bell():
         return
     
     user_id = user.get('id')
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     
     unread = conn.execute("SELECT COUNT(*) as cnt FROM notifications WHERE user_id=? AND read=0", (user_id,)).fetchone()['cnt']
@@ -58,7 +58,7 @@ def render_notification_bell():
             st.session_state['show_notifications'] = not st.session_state.get('show_notifications', False)
             # Mark all as read
             if unread > 0:
-                conn2 = sqlite3.connect(Config.DB_PATH)
+                conn2 = sqlite3.connect(Config.DATABASE_PATH)
                 conn2.execute("UPDATE notifications SET read=1 WHERE user_id=? AND read=0", (user_id,))
                 conn2.commit(); conn2.close()
             st.rerun()

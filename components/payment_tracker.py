@@ -16,7 +16,7 @@ def render_payment_tracker():
     </div>
     """, unsafe_allow_html=True)
     
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     
     try:
         # Overview metrics

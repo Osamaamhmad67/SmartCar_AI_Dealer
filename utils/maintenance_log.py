@@ -11,7 +11,7 @@ class MaintenanceLog:
 
     @staticmethod
     def _ensure_table():
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS maintenance_log (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,7 +32,7 @@ class MaintenanceLog:
     def add_entry(transaction_id: int, service_type: str, description: str = None,
                   cost: float = 0, service_date: str = None, next_service: str = None, mechanic: str = None):
         MaintenanceLog._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             INSERT INTO maintenance_log (transaction_id, service_type, description, cost, service_date, next_service_date, mechanic)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -42,7 +42,7 @@ class MaintenanceLog:
     @staticmethod
     def get_history(transaction_id: int) -> list:
         MaintenanceLog._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT * FROM maintenance_log WHERE transaction_id=? ORDER BY service_date DESC",
                            (transaction_id,)).fetchall()
@@ -52,7 +52,7 @@ class MaintenanceLog:
     @staticmethod
     def get_total_cost(transaction_id: int) -> float:
         MaintenanceLog._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         row = conn.execute("SELECT COALESCE(SUM(cost),0) FROM maintenance_log WHERE transaction_id=?",
                           (transaction_id,)).fetchone()
         conn.close()

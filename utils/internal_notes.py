@@ -12,7 +12,7 @@ class InternalNotes:
 
     @staticmethod
     def _ensure_table():
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS internal_notes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,7 +30,7 @@ class InternalNotes:
     @staticmethod
     def add_note(entity_type: str, entity_id: int, note: str, user_id: int = None, username: str = None, priority: str = 'normal'):
         InternalNotes._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("INSERT INTO internal_notes (entity_type, entity_id, user_id, username, note, priority) VALUES (?,?,?,?,?,?)",
                      (entity_type, entity_id, user_id, username, note, priority))
         conn.commit(); conn.close()
@@ -38,7 +38,7 @@ class InternalNotes:
     @staticmethod
     def get_notes(entity_type: str, entity_id: int) -> list:
         InternalNotes._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT * FROM internal_notes WHERE entity_type=? AND entity_id=? ORDER BY created_at DESC",
                            (entity_type, entity_id)).fetchall()
@@ -47,7 +47,7 @@ class InternalNotes:
 
     @staticmethod
     def delete_note(note_id: int):
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("DELETE FROM internal_notes WHERE id=?", (note_id,))
         conn.commit(); conn.close()
 

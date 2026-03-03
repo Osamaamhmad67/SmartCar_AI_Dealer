@@ -40,7 +40,7 @@ class CSVImporter:
     @staticmethod
     def import_to_db(rows: list, user_id: int) -> dict:
         """Import parsed rows into transactions table"""
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         imported = 0
         errors = []
         

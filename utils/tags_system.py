@@ -11,7 +11,7 @@ class TagsSystem:
 
     @staticmethod
     def _ensure_table():
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS car_tags (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +37,7 @@ class TagsSystem:
     @staticmethod
     def add_tag(transaction_id: int, tag: str, color: str = '#D4AF37'):
         TagsSystem._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         # Avoid duplicates
         existing = conn.execute("SELECT id FROM car_tags WHERE transaction_id=? AND tag=?", (transaction_id, tag)).fetchone()
         if not existing:
@@ -47,14 +47,14 @@ class TagsSystem:
 
     @staticmethod
     def remove_tag(transaction_id: int, tag: str):
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("DELETE FROM car_tags WHERE transaction_id=? AND tag=?", (transaction_id, tag))
         conn.commit(); conn.close()
 
     @staticmethod
     def get_tags(transaction_id: int) -> list:
         TagsSystem._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT * FROM car_tags WHERE transaction_id=?", (transaction_id,)).fetchall()
         conn.close()
@@ -63,7 +63,7 @@ class TagsSystem:
     @staticmethod
     def get_cars_by_tag(tag: str) -> list:
         TagsSystem._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         rows = conn.execute("SELECT transaction_id FROM car_tags WHERE tag=?", (tag,)).fetchall()
         conn.close()
         return [r[0] for r in rows]

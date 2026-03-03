@@ -17,7 +17,7 @@ def render_car_comparison():
     </div>
     """, unsafe_allow_html=True)
     
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     cars = conn.execute("SELECT id, brand, model, manufacture_year, estimated_price FROM transactions WHERE estimated_price > 0 ORDER BY created_at DESC LIMIT 50").fetchall()
     conn.close()
@@ -32,7 +32,7 @@ def render_car_comparison():
         car2_label = st.selectbox(f"🚗 {t('compare.car2', 'Car 2')}", list(car_options.keys()), key="cmp_car2", index=min(1, len(car_options)-1))
     
     if car1_label and car2_label and st.button(f"📊 {t('compare.compare', 'Compare')}", type="primary", use_container_width=True):
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         c1 = dict(conn.execute("SELECT * FROM transactions WHERE id=?", (car_options[car1_label],)).fetchone())
         c2 = dict(conn.execute("SELECT * FROM transactions WHERE id=?", (car_options[car2_label],)).fetchone())

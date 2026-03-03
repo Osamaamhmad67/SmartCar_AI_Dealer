@@ -17,7 +17,7 @@ class ReportGenerator:
             now = datetime.now()
             year, month = now.year, now.month
 
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         c = conn.cursor()
 
         # Transactions this month

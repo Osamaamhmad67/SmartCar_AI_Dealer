@@ -13,7 +13,7 @@ class MarketComparator:
     def get_comparison(brand: str, model: str, year: int, mileage: float, estimated_price: float) -> dict:
         """Compare price against similar cars in our database"""
         try:
-            conn = sqlite3.connect(Config.DB_PATH)
+            conn = sqlite3.connect(Config.DATABASE_PATH)
             cursor = conn.cursor()
             
             # Find similar cars (same brand, ±2 years, ±30k km)

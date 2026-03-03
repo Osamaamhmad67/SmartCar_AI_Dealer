@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 
 def get_db():
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 

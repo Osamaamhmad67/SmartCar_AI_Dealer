@@ -18,13 +18,13 @@ class TwoFactorAuth:
         """Generate and store a new TOTP secret for user"""
         secret = pyotp.random_base32()
         try:
-            conn = sqlite3.connect(Config.DB_PATH)
+            conn = sqlite3.connect(Config.DATABASE_PATH)
             conn.execute("UPDATE users SET totp_secret=? WHERE id=?", (secret, user_id))
             conn.commit()
             conn.close()
         except Exception:
             # Column might not exist, add it
-            conn = sqlite3.connect(Config.DB_PATH)
+            conn = sqlite3.connect(Config.DATABASE_PATH)
             try:
                 conn.execute("ALTER TABLE users ADD COLUMN totp_secret TEXT")
             except Exception:
@@ -58,7 +58,7 @@ class TwoFactorAuth:
     @staticmethod
     def enable_2fa(user_id: int):
         """Enable 2FA for a user"""
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("UPDATE users SET totp_enabled=1 WHERE id=?", (user_id,))
         conn.commit()
         conn.close()
@@ -66,7 +66,7 @@ class TwoFactorAuth:
     @staticmethod
     def disable_2fa(user_id: int):
         """Disable 2FA for a user"""
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("UPDATE users SET totp_enabled=0, totp_secret=NULL WHERE id=?", (user_id,))
         conn.commit()
         conn.close()
@@ -75,7 +75,7 @@ class TwoFactorAuth:
     def is_enabled(user_id: int) -> bool:
         """Check if 2FA is enabled"""
         try:
-            conn = sqlite3.connect(Config.DB_PATH)
+            conn = sqlite3.connect(Config.DATABASE_PATH)
             row = conn.execute("SELECT totp_enabled FROM users WHERE id=?", (user_id,)).fetchone()
             conn.close()
             return bool(row and row[0])
@@ -86,7 +86,7 @@ class TwoFactorAuth:
     def get_secret(user_id: int) -> str:
         """Get stored TOTP secret"""
         try:
-            conn = sqlite3.connect(Config.DB_PATH)
+            conn = sqlite3.connect(Config.DATABASE_PATH)
             row = conn.execute("SELECT totp_secret FROM users WHERE id=?", (user_id,)).fetchone()
             conn.close()
             return row[0] if row else None

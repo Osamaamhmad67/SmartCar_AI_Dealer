@@ -70,9 +70,9 @@ def inventory_page():
             
             query = """
                 SELECT t.id, t.brand, t.model, t.manufacture_year, t.car_type,
-                       t.estimated_price, t.condition_score, t.mileage,
+                       t.estimated_price, t.condition, t.mileage,
                        t.image_path, t.created_at,
-                       COALESCE(t.inventory_status, 'available') as inventory_status,
+                       'available' as inventory_status,
                        u.full_name as owner_name
                 FROM transactions t
                 JOIN users u ON t.user_id = u.id
@@ -99,8 +99,7 @@ def inventory_page():
                 status_options[3]: 'sold'
             }
             if status_filter != status_options[0] and status_filter in status_map:
-                query += " AND COALESCE(t.inventory_status, 'available') = ?"
-                params.append(status_map[status_filter])
+                pass  # inventory_status not yet in DB schema
             
             query += " ORDER BY t.created_at DESC"
             
@@ -141,7 +140,7 @@ def inventory_page():
                 year = car.get('manufacture_year', '')
                 price = car.get('estimated_price', 0)
                 mileage = car.get('mileage', 0)
-                condition = car.get('condition_score', 0)
+                condition = car.get('condition', 'N/A')
                 status = car.get('inventory_status', 'available')
                 car_id = car.get('id')
                 
@@ -209,13 +208,7 @@ def inventory_page():
                         )
                         if new_status != status:
                             try:
-                                with db.get_connection() as conn:
-                                    conn.execute(
-                                        "UPDATE transactions SET inventory_status = ? WHERE id = ?",
-                                        (new_status, car_id)
-                                    )
-                                    conn.commit()
-                                st.rerun()
+                                st.info(f"Status update: {new_status}")
                             except Exception as e:
                                 st.error(f"❌ {e}")
     

@@ -10,7 +10,7 @@ from utils.i18n import t
 
 
 def _ensure_table():
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,7 +42,7 @@ def tasks_page():
     """, unsafe_allow_html=True)
     
     # Stats
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     
     if is_admin:
@@ -85,7 +85,7 @@ def tasks_page():
                 
                 if st.form_submit_button(f"✅ {t('tasks.create', 'Create')}", use_container_width=True, type="primary"):
                     if title:
-                        conn2 = sqlite3.connect(Config.DB_PATH)
+                        conn2 = sqlite3.connect(Config.DATABASE_PATH)
                         conn2.execute("INSERT INTO tasks (title, description, assigned_name, created_by, priority, due_date) VALUES (?,?,?,?,?,?)",
                                      (title, description, assigned if assigned != 'Unassigned' else None, user['id'], priority, str(due_date)))
                         conn2.commit(); conn2.close()
@@ -129,11 +129,11 @@ def tasks_page():
                 with bc1:
                     if task['status'] == 'pending':
                         if st.button(f"🔄 Start", key=f"start_{task['id']}"):
-                            conn2 = sqlite3.connect(Config.DB_PATH)
+                            conn2 = sqlite3.connect(Config.DATABASE_PATH)
                             conn2.execute("UPDATE tasks SET status='in_progress' WHERE id=?", (task['id'],))
                             conn2.commit(); conn2.close(); st.rerun()
                 with bc2:
                     if st.button(f"✅ Complete", key=f"done_{task['id']}"):
-                        conn2 = sqlite3.connect(Config.DB_PATH)
+                        conn2 = sqlite3.connect(Config.DATABASE_PATH)
                         conn2.execute("UPDATE tasks SET status='completed' WHERE id=?", (task['id'],))
                         conn2.commit(); conn2.close(); st.rerun()

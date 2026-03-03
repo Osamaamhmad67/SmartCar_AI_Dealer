@@ -13,7 +13,7 @@ class Newsletter:
 
     @staticmethod
     def _ensure_table():
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS newsletter (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +37,7 @@ class Newsletter:
     @staticmethod
     def subscribe(email: str, name: str = None):
         Newsletter._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         try:
             conn.execute("INSERT OR REPLACE INTO newsletter (email, name, subscribed) VALUES (?, ?, 1)", (email, name))
             conn.commit()
@@ -46,14 +46,14 @@ class Newsletter:
 
     @staticmethod
     def unsubscribe(email: str):
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("UPDATE newsletter SET subscribed=0 WHERE email=?", (email,))
         conn.commit(); conn.close()
 
     @staticmethod
     def get_subscribers() -> list:
         Newsletter._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT * FROM newsletter WHERE subscribed=1 ORDER BY created_at DESC").fetchall()
         conn.close()
@@ -62,7 +62,7 @@ class Newsletter:
     @staticmethod
     def create_campaign(subject: str, body: str) -> int:
         Newsletter._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         cursor = conn.execute("INSERT INTO campaigns (subject, body) VALUES (?, ?)", (subject, body))
         campaign_id = cursor.lastrowid
         conn.commit(); conn.close()
@@ -71,7 +71,7 @@ class Newsletter:
     @staticmethod
     def get_campaigns() -> list:
         Newsletter._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT * FROM campaigns ORDER BY created_at DESC LIMIT 20").fetchall()
         conn.close()
@@ -80,7 +80,7 @@ class Newsletter:
     @staticmethod
     def get_stats() -> dict:
         Newsletter._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         total = conn.execute("SELECT COUNT(*) FROM newsletter WHERE subscribed=1").fetchone()[0]
         campaigns = conn.execute("SELECT COUNT(*) FROM campaigns").fetchone()[0]
         conn.close()

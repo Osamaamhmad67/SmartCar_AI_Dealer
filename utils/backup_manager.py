@@ -10,14 +10,14 @@ from config import Config
 class BackupManager:
     """Automated database backup with scheduling"""
 
-    BACKUP_DIR = os.path.join(os.path.dirname(Config.DB_PATH), 'backups')
+    BACKUP_DIR = os.path.join(os.path.dirname(Config.DATABASE_PATH), 'backups')
 
     @staticmethod
     def create_backup() -> str:
         os.makedirs(BackupManager.BACKUP_DIR, exist_ok=True)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         backup_path = os.path.join(BackupManager.BACKUP_DIR, f'smartcar_backup_{timestamp}.db')
-        shutil.copy2(Config.DB_PATH, backup_path)
+        shutil.copy2(Config.DATABASE_PATH, backup_path)
         return backup_path
 
     @staticmethod
@@ -37,7 +37,7 @@ class BackupManager:
             return False
         # Create safety backup first
         safety = BackupManager.create_backup()
-        shutil.copy2(backup_path, Config.DB_PATH)
+        shutil.copy2(backup_path, Config.DATABASE_PATH)
         return True
 
     @staticmethod
@@ -54,7 +54,7 @@ class BackupManager:
 
     @staticmethod
     def get_db_size() -> float:
-        return os.path.getsize(Config.DB_PATH) / 1024 / 1024
+        return os.path.getsize(Config.DATABASE_PATH) / 1024 / 1024
 
     @staticmethod
     def render_backup_ui():

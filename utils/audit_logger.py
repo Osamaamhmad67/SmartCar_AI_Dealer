@@ -21,7 +21,7 @@ class AuditLogger:
             pass
         details_json = json.dumps(details, ensure_ascii=False) if details else None
         try:
-            conn = sqlite3.connect(Config.DB_PATH)
+            conn = sqlite3.connect(Config.DATABASE_PATH)
             conn.execute(
                 "INSERT INTO audit_log (user_id,username,action,entity_type,entity_id,details,created_at) VALUES (?,?,?,?,?,?,?)",
                 (user_id, username, action, entity_type, str(entity_id) if entity_id else None, details_json, datetime.now().isoformat()))
@@ -33,7 +33,7 @@ class AuditLogger:
     @staticmethod
     def get_logs(limit=100, action_filter=None, user_filter=None):
         try:
-            conn = sqlite3.connect(Config.DB_PATH)
+            conn = sqlite3.connect(Config.DATABASE_PATH)
             q, p = "SELECT * FROM audit_log WHERE 1=1", []
             if action_filter: q += " AND action=?"; p.append(action_filter)
             if user_filter: q += " AND username LIKE ?"; p.append(f"%{user_filter}%")
@@ -47,7 +47,7 @@ class AuditLogger:
     @staticmethod
     def get_stats():
         try:
-            conn = sqlite3.connect(Config.DB_PATH); c = conn.cursor()
+            conn = sqlite3.connect(Config.DATABASE_PATH); c = conn.cursor()
             c.execute("SELECT COUNT(*) FROM audit_log"); total = c.fetchone()[0]
             c.execute("SELECT COUNT(*) FROM audit_log WHERE created_at >= date('now','-1 day')"); today = c.fetchone()[0]
             c.execute("SELECT action,COUNT(*) as cnt FROM audit_log GROUP BY action ORDER BY cnt DESC LIMIT 5"); top = c.fetchall()

@@ -12,7 +12,7 @@ class OffersSystem:
 
     @staticmethod
     def _ensure_table():
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS offers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,7 +41,7 @@ class OffersSystem:
         OffersSystem._ensure_table()
         if not code:
             code = OffersSystem.generate_code()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             INSERT INTO offers (code, description, discount_type, discount_value, max_uses, valid_until)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -52,7 +52,7 @@ class OffersSystem:
     @staticmethod
     def validate_code(code: str) -> dict:
         OffersSystem._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         offer = conn.execute("SELECT * FROM offers WHERE code=? AND active=1", (code,)).fetchone()
         conn.close()
@@ -85,7 +85,7 @@ class OffersSystem:
         final_price = max(0, original_price - discount)
         
         # Increment usage
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("UPDATE offers SET current_uses = current_uses + 1 WHERE code=?", (code,))
         conn.commit(); conn.close()
         
@@ -100,7 +100,7 @@ class OffersSystem:
     @staticmethod
     def get_all_offers() -> list:
         OffersSystem._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT * FROM offers ORDER BY created_at DESC").fetchall()
         conn.close()

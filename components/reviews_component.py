@@ -10,7 +10,7 @@ from utils.i18n import t
 
 
 def _ensure_reviews_table():
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS reviews (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +38,7 @@ def render_reviews():
     """, unsafe_allow_html=True)
     
     # Stats
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(Config.DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     stats = conn.execute("SELECT COUNT(*) as cnt, AVG(rating) as avg_r FROM reviews").fetchone()
     total = stats['cnt']
@@ -59,7 +59,7 @@ def render_reviews():
                 
                 if st.form_submit_button(f"✅ {t('reviews.submit', 'Submit')}", use_container_width=True, type="primary"):
                     try:
-                        conn2 = sqlite3.connect(Config.DB_PATH)
+                        conn2 = sqlite3.connect(Config.DATABASE_PATH)
                         conn2.execute("INSERT INTO reviews (user_id, username, rating, comment) VALUES (?, ?, ?, ?)",
                             (user['id'], user.get('full_name', user.get('username', '')), rating, comment))
                         conn2.commit(); conn2.close()

@@ -12,7 +12,7 @@ class CustomerMessages:
 
     @staticmethod
     def _ensure_table():
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,7 +31,7 @@ class CustomerMessages:
     @staticmethod
     def send(sender_id: int, sender_name: str, body: str, subject: str = None, receiver_id: int = None, reply_to: int = None):
         CustomerMessages._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("INSERT INTO messages (sender_id, sender_name, receiver_id, subject, body, reply_to) VALUES (?,?,?,?,?,?)",
                      (sender_id, sender_name, receiver_id, subject, body, reply_to))
         conn.commit(); conn.close()
@@ -39,7 +39,7 @@ class CustomerMessages:
     @staticmethod
     def get_inbox(user_id: int, is_admin: bool = False) -> list:
         CustomerMessages._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         if is_admin:
             rows = conn.execute("SELECT * FROM messages ORDER BY created_at DESC LIMIT 50").fetchall()
@@ -51,14 +51,14 @@ class CustomerMessages:
 
     @staticmethod
     def mark_read(message_id: int):
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.execute("UPDATE messages SET is_read=1 WHERE id=?", (message_id,))
         conn.commit(); conn.close()
 
     @staticmethod
     def get_unread_count(user_id: int, is_admin: bool = False) -> int:
         CustomerMessages._ensure_table()
-        conn = sqlite3.connect(Config.DB_PATH)
+        conn = sqlite3.connect(Config.DATABASE_PATH)
         if is_admin:
             row = conn.execute("SELECT COUNT(*) FROM messages WHERE is_read=0").fetchone()
         else:

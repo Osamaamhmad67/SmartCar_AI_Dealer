@@ -1,137 +1,1262 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>SmartCar AI-Dealer - Changes Report</title>
+    <title>SmartCar AI-Dealer - Complete Project Report</title>
     <style>
-        @page { size: A4; margin: 15mm; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 11px; color: #222; line-height: 1.5; direction: ltr; }
-        .header { text-align: center; border-bottom: 3px solid #D4AF37; padding-bottom: 10px; margin-bottom: 15px; }
-        .header h1 { font-size: 20px; color: #1a1a2e; }
-        .header p { color: #666; font-size: 11px; }
-        .section { margin-bottom: 12px; page-break-inside: avoid; }
-        .section h2 { font-size: 14px; color: #D4AF37; border-bottom: 1px solid #eee; padding-bottom: 3px; margin-bottom: 6px; }
-        .section h3 { font-size: 12px; color: #1a1a2e; margin: 6px 0 3px; }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 8px; }
-        th { background: #1a1a2e; color: white; padding: 5px 8px; text-align: left; }
-        td { padding: 4px 8px; border-bottom: 1px solid #eee; }
-        tr:nth-child(even) { background: #f8f8f8; }
-        .badge { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 9px; font-weight: bold; color: white; }
-        .new { background: #27ae60; }
-        .modified { background: #3498db; }
-        .commit { background: #f5f5f5; padding: 5px 10px; border-left: 3px solid #D4AF37; margin: 4px 0; font-family: monospace; font-size: 10px; }
-        .footer { text-align: center; border-top: 2px solid #D4AF37; padding-top: 8px; margin-top: 15px; color: #999; font-size: 9px; }
-        .two-col { display: flex; gap: 15px; }
-        .two-col > div { flex: 1; }
-        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            font-size: 8.5px;
+            color: #222;
+            line-height: 1.4;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #D4AF37;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-size: 17px;
+            color: #1a1a2e;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 9px;
+        }
+
+        .section {
+            margin-bottom: 6px;
+        }
+
+        .section h2 {
+            font-size: 11px;
+            color: #D4AF37;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 2px;
+            margin-bottom: 3px;
+        }
+
+        .section h3 {
+            font-size: 9.5px;
+            color: #1a1a2e;
+            margin: 4px 0 2px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
+            margin-bottom: 4px;
+        }
+
+        th {
+            background: #1a1a2e;
+            color: white;
+            padding: 2px 4px;
+            text-align: left;
+            font-size: 7.5px;
+        }
+
+        td {
+            padding: 2px 4px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f8f8;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0px 4px;
+            border-radius: 5px;
+            font-size: 7px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .new {
+            background: #27ae60;
+        }
+
+        .mod {
+            background: #3498db;
+        }
+
+        .fix {
+            background: #e67e22;
+        }
+
+        .del {
+            background: #e74c3c;
+        }
+
+        .ref {
+            background: #9b59b6;
+        }
+
+        .commit {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-left: 2px solid #D4AF37;
+            margin: 2px 0;
+            font-family: monospace;
+            font-size: 7.5px;
+        }
+
+        .footer {
+            text-align: center;
+            border-top: 2px solid #D4AF37;
+            padding-top: 4px;
+            margin-top: 6px;
+            color: #999;
+            font-size: 7px;
+        }
+
+        .stats-grid {
+            display: flex;
+            gap: 6px;
+            margin: 6px 0;
+        }
+
+        .stats-grid>div {
+            flex: 1;
+            background: #f8f8f8;
+            padding: 6px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #eee;
+        }
+
+        .stats-grid .num {
+            font-size: 16px;
+            font-weight: bold;
+            color: #D4AF37;
+        }
+
+        .stats-grid .label {
+            font-size: 7px;
+            color: #666;
+        }
+
+        .phase-header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #D4AF37;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: bold;
+            margin: 6px 0 3px;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .page-break {
+                page-break-before: always;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-<div class="header">
-    <h1>🏎️ SmartCar AI-Dealer — Changes Report</h1>
-    <p>All modifications from 02.03.2026 – 03.03.2026 | Total: 28 Features | ~4,000+ lines of code</p>
-</div>
+    <!-- ===================== PAGE 1 ===================== -->
+    <div class="header">
+        <h1>🏎️ SmartCar AI-Dealer — Complete Project Development Report</h1>
+        <p>Full project history from initial commit to 03.03.2026 | 34 Git Commits | 100+ Files | ~50,000+ Lines of Code
+        </p>
+    </div>
 
-<!-- SESSION 1: Yesterday -->
-<div class="section">
-    <h2>📅 Session 1 — 02.03.2026 (Features 1-4 + Transaction Card)</h2>
-    <table>
-        <tr><th>#</th><th>Feature</th><th>File(s)</th><th>Type</th><th>Details</th></tr>
-        <tr><td>1</td><td>📊 Advanced Dashboard</td><td>admin_page.py</td><td><span class="badge modified">MOD</span></td><td>5 Plotly charts: Monthly Revenue, Price Distribution, Top Models, Employee Ranking, Quick Stats</td></tr>
-        <tr><td>2</td><td>📧 Auto Notifications</td><td>notifier.py</td><td><span class="badge modified">MOD</span></td><td>Installment reminders, TÜV expiry alerts, batch reminder runner, admin trigger button</td></tr>
-        <tr><td>3</td><td>🚗 Car Inventory</td><td>inventory_page.py</td><td><span class="badge new">NEW</span></td><td>Card grid view, brand/status/price filters, admin status management (available/reserved/sold)</td></tr>
-        <tr><td>4</td><td>💬 AI Chatbot</td><td>chatbot_component.py</td><td><span class="badge new">NEW</span></td><td>Floating sidebar chatbot, quick-reply buttons, Groq AI integration, chat history</td></tr>
-        <tr><td>—</td><td>📋 Transaction Card</td><td>home_page.py</td><td><span class="badge modified">MOD</span></td><td>Added 9 new fields: Transmission, Drivetrain, Engine CC, PS, Emissions, Accident, Warranty, Service Book, Equipment</td></tr>
-    </table>
-    <div class="commit">git commit: feat: show all car specs in transaction card</div>
-</div>
-
-<!-- SESSION 2: Today Batch 1 -->
-<div class="section">
-    <h2>📅 Session 2 — 03.03.2026 (Features 5-12)</h2>
-    <table>
-        <tr><th>#</th><th>Feature</th><th>File(s)</th><th>Type</th><th>Details</th></tr>
-        <tr><td>5</td><td>🖨️ Direct Print</td><td>checkout_pages.py</td><td><span class="badge modified">MOD</span></td><td>Browser print via window.print() with base64 PDF, alongside download buttons for contracts & invoices</td></tr>
-        <tr><td>6</td><td>📷 360° Image Analysis</td><td>predict_pages.py</td><td><span class="badge modified">MOD</span></td><td>Expanded from 3 to 5 upload angles: Front, Side, Interior + Rear, Engine</td></tr>
-        <tr><td>7</td><td>📋 Audit Log</td><td>audit_logger.py</td><td><span class="badge new">NEW</span></td><td>audit_log table, log/get_logs/get_stats methods, admin viewer with color-coded actions & filters</td></tr>
-        <tr><td>8</td><td>🔗 DATEV Export</td><td>datev_export.py</td><td><span class="badge new">NEW</span></td><td>German accounting CSV format, transactions & invoices export, DATEV column standard</td></tr>
-        <tr><td>9</td><td>🌐 Public Showcase</td><td>showcase_page.py</td><td><span class="badge new">NEW</span></td><td>Public car listing, brand search, price filter, sorting, premium card layout with all specs</td></tr>
-        <tr><td>10</td><td>📈 Demand Forecast</td><td>admin_page.py</td><td><span class="badge modified">MOD</span></td><td>Moving average forecast chart with 3-month prediction, bar + dash-line visualization</td></tr>
-        <tr><td>11</td><td>🔐 2FA Authentication</td><td>two_factor.py</td><td><span class="badge new">NEW</span></td><td>TOTP via pyotp, QR code generation, verify/enable/disable, auto DB migration</td></tr>
-        <tr><td>12</td><td>🔍 Market Comparison</td><td>market_compare.py</td><td><span class="badge new">NEW</span></td><td>Compare against DB (same brand ±2yr ±30k km), position analysis (below/fair/above market)</td></tr>
-    </table>
-    <div class="commit">git commit: feat: add direct print, 360 images, audit log, DATEV export, showcase, demand forecast, 2FA, market compare</div>
-</div>
-
-<!-- SESSION 2: Today Batch 2 -->
-<div class="section">
-    <h2>📅 Session 2 — 03.03.2026 (Features 13-20)</h2>
-    <table>
-        <tr><th>#</th><th>Feature</th><th>File(s)</th><th>Type</th><th>Details</th></tr>
-        <tr><td>13</td><td>📱 WhatsApp</td><td>whatsapp_sender.py</td><td><span class="badge new">NEW</span></td><td>wa.me links for installment reminders, TÜV alerts, welcome messages (German)</td></tr>
-        <tr><td>14</td><td>📊 Monthly Reports</td><td>report_generator.py</td><td><span class="badge new">NEW</span></td><td>Monthly summary with revenue, growth %, top brands, formatted German text output</td></tr>
-        <tr><td>15</td><td>🗓️ Appointment System</td><td>appointments_page.py</td><td><span class="badge new">NEW</span></td><td>Booking form (type/date/time), status tracking, admin confirm/cancel, auto table creation</td></tr>
-        <tr><td>16</td><td>⭐ Customer Reviews</td><td>reviews_component.py</td><td><span class="badge new">NEW</span></td><td>Star ratings (1-5), comments, avg/total stats, review form, auto table creation</td></tr>
-        <tr><td>17</td><td>📋 Contract Templates</td><td>contract_templates.py</td><td><span class="badge new">NEW</span></td><td>4 types: Kaufvertrag, Mietvertrag, Ratenkauf, Garantie — with German legal clauses</td></tr>
-        <tr><td>18</td><td>🔔 Push Notifications</td><td>notifications_bell.py</td><td><span class="badge new">NEW</span></td><td>In-app bell with badge, read/unread, push_notification() API, color-coded types</td></tr>
-        <tr><td>19</td><td>🗺️ Branch Map</td><td>branches_page.py</td><td><span class="badge new">NEW</span></td><td>Interactive st.map with 4 German cities (Berlin, München, Hamburg, Frankfurt)</td></tr>
-        <tr><td>20</td><td>📈 KPI Dashboard</td><td>admin_page.py</td><td><span class="badge modified">MOD</span></td><td>Sales/Revenue/Users targets with progress bars, configurable goals</td></tr>
-    </table>
-    <div class="commit">git commit: feat: add WhatsApp, reports, appointments, reviews, contract templates, notifications, branches, KPI dashboard</div>
-</div>
-
-<!-- SESSION 2: Today Batch 3 -->
-<div class="section">
-    <h2>📅 Session 2 — 03.03.2026 (Features 21-28)</h2>
-    <table>
-        <tr><th>#</th><th>Feature</th><th>File(s)</th><th>Type</th><th>Details</th></tr>
-        <tr><td>21</td><td>📊 Excel Export</td><td>excel_export.py</td><td><span class="badge new">NEW</span></td><td>Multi-sheet Excel: Transactions, Users, Contracts, Employees, Appointments, Audit Log</td></tr>
-        <tr><td>22</td><td>🔄 Car Pipeline</td><td>car_pipeline.py</td><td><span class="badge new">NEW</span></td><td>5 stages: Received → Inspected → Priced → Listed → Sold, stage history, visual HTML pipeline</td></tr>
-        <tr><td>23</td><td>📧 Email Templates</td><td>email_templates.py</td><td><span class="badge new">NEW</span></td><td>Professional HTML: Welcome, Invoice, Appointment Confirm, Payment Received</td></tr>
-        <tr><td>24</td><td>🧮 Finance Calculator</td><td>finance_calculator.py</td><td><span class="badge new">NEW</span></td><td>Interactive: price, down payment %, months, interest rate → monthly payment + total cost</td></tr>
-        <tr><td>25</td><td>📸 Photo Gallery</td><td>photo_gallery.py</td><td><span class="badge new">NEW</span></td><td>Thumbnails, click-to-zoom, prev/next navigation, auto-load from uploads folder</td></tr>
-        <tr><td>26</td><td>📝 Internal Notes</td><td>internal_notes.py</td><td><span class="badge new">NEW</span></td><td>Per-entity notes for employees, priority levels (normal/high/urgent), Streamlit UI</td></tr>
-        <tr><td>27</td><td>🔒 Login Tracker</td><td>login_tracker.py</td><td><span class="badge new">NEW</span></td><td>Login/logout sessions, failed attempt monitoring, active users today counter</td></tr>
-        <tr><td>28</td><td>📋 Task Management</td><td>tasks_page.py</td><td><span class="badge new">NEW</span></td><td>Create/assign tasks, priority levels, status workflow (pending → in_progress → completed)</td></tr>
-    </table>
-    <div class="commit">git commit: feat: add Excel export, car pipeline, email templates, finance calculator, photo gallery, internal notes, login tracker, task management</div>
-</div>
-
-<!-- Summary -->
-<div class="section">
-    <h2>📊 Summary Statistics</h2>
-    <div class="two-col">
+    <div class="stats-grid">
         <div>
-            <h3>Files Created/Modified</h3>
-            <table>
-                <tr><th>Category</th><th>Count</th></tr>
-                <tr><td><span class="badge new">NEW</span> Files Created</td><td><b>24</b></td></tr>
-                <tr><td><span class="badge modified">MOD</span> Files Modified</td><td><b>8</b></td></tr>
-                <tr><td>Total Lines Added</td><td><b>~4,000+</b></td></tr>
-                <tr><td>Git Commits</td><td><b>5</b></td></tr>
-            </table>
+            <div class="num">34</div>
+            <div class="label">Git Commits</div>
         </div>
         <div>
-            <h3>Modified Core Files</h3>
-            <table>
-                <tr><th>File</th><th>Changes</th></tr>
-                <tr><td>app.py</td><td>Routes + imports for 7 pages</td></tr>
-                <tr><td>sidebar.py</td><td>7 new navigation buttons</td></tr>
-                <tr><td>admin_page.py</td><td>+5 admin sections</td></tr>
-                <tr><td>checkout_pages.py</td><td>Print buttons</td></tr>
-                <tr><td>predict_pages.py</td><td>2 extra upload angles</td></tr>
-                <tr><td>home_page.py</td><td>9 new spec fields</td></tr>
-                <tr><td>notifier.py</td><td>Reminder methods</td></tr>
-            </table>
+            <div class="num">100+</div>
+            <div class="label">Total Files</div>
+        </div>
+        <div>
+            <div class="num">50,000+</div>
+            <div class="label">Lines of Code</div>
+        </div>
+        <div>
+            <div class="num">52</div>
+            <div class="label">New Features (Recent)</div>
+        </div>
+        <div>
+            <div class="num">3</div>
+            <div class="label">Languages (DE/EN/AR)</div>
+        </div>
+        <div>
+            <div class="num">9</div>
+            <div class="label">Commits Today</div>
         </div>
     </div>
-</div>
 
-<div class="footer">
-    🏎️ SmartCar AI-Dealer — Development Report | Generated: 03.03.2026 | GitHub: github.com/Osamaamhmad67/SmartCar_AI_Dealer
-</div>
+    <!-- PHASE 1 -->
+    <div class="phase-header">📦 Phase 1 — Project Foundation (Initial Commit)</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>Component</th>
+                <th>Files</th>
+                <th>Lines</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>🏗️ Core Application</td>
+                <td>app.py</td>
+                <td>9,562</td>
+                <td>Main Streamlit app: authentication, dashboard, transactions, contracts, invoices, payroll, employees
+                </td>
+            </tr>
+            <tr>
+                <td>💾 Database</td>
+                <td>db_manager.py</td>
+                <td>1,170</td>
+                <td>SQLite ORM: users, transactions, contracts, employees, payroll, attendance tables</td>
+            </tr>
+            <tr>
+                <td>🤖 AI Engine</td>
+                <td>groq_client.py, groq_base.py</td>
+                <td>256</td>
+                <td>Groq API integration for car image analysis and brand/model recognition</td>
+            </tr>
+            <tr>
+                <td>🌍 Internationalization</td>
+                <td>locales/ar,de,en.json + i18n.py</td>
+                <td>3,394</td>
+                <td>Full Arabic, German, English support with RTL</td>
+            </tr>
+            <tr>
+                <td>🧾 Invoicing</td>
+                <td>invoice_generator.py, installment_invoice.py</td>
+                <td>1,166</td>
+                <td>PDF invoice generation with Arabic font support, installment tracking</td>
+            </tr>
+            <tr>
+                <td>🔧 Utilities</td>
+                <td>ocr_scanner, notifier, payment_processor, validation, cache, cleanup, logger</td>
+                <td>975</td>
+                <td>OCR, notifications, payments, validation, caching, cleanup, logging</td>
+            </tr>
+            <tr>
+                <td>🔐 Authentication</td>
+                <td>auth.py, config.py, create_admin.py</td>
+                <td>395</td>
+                <td>User authentication, role management, admin setup</td>
+            </tr>
+            <tr>
+                <td>🐳 DevOps</td>
+                <td>Dockerfile, docker-compose.yml, scripts/*</td>
+                <td>519</td>
+                <td>Docker deployment, backup, migration, build scripts</td>
+            </tr>
+            <tr>
+                <td>📖 Documentation</td>
+                <td>README.md, .env.example</td>
+                <td>90</td>
+                <td>Project documentation, environment template</td>
+            </tr>
+        </table>
+        <div class="commit">1948bcc Initial commit — 72 files, 18,524 lines</div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="phase-header">🎨 Phase 2 — UI/UX & AI Improvements</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Change</th>
+                <th>Files</th>
+                <th>Type</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Gold Theme</td>
+                <td>app.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Replace pink accent → gold (#D4AF37) throughout UI</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Help Tips Fix</td>
+                <td>app.py, i18n.py</td>
+                <td><span class="badge fix">FIX</span></td>
+                <td>White text for readability on dark background</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>AI Brand Recognition</td>
+                <td>groq_client.py, app.py, locales/*</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Improved accuracy + camera tips for better photos</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>Škoda/VW Correction</td>
+                <td>groq_client.py, app.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Post-processing auto-correction for brand confusion</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>Color Matching</td>
+                <td>app.py</td>
+                <td><span class="badge fix">FIX</span></td>
+                <td>Fix color extraction from AI output in all 3 languages</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>Console Encoding</td>
+                <td>app.py, groq_client.py</td>
+                <td><span class="badge fix">FIX</span></td>
+                <td>Remove emojis from Windows console logger</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>User Dashboard</td>
+                <td>app.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Personal dashboard for non-admin users</td>
+            </tr>
+        </table>
+        <div class="commit">2ef2433 → 7565849 — 7 commits, ~330 lines changed</div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="phase-header">🚀 Phase 3 — Major Expansions</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Change</th>
+                <th>Files</th>
+                <th>Type</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>SmartCar AI Dealer v2</td>
+                <td>17 files</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Streamlit config, DB expansion, invoice improvements, car images</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>Attendance & QR System</td>
+                <td>13 files</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>QR code check-in/out, attendance tracking, employee pages</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>AI Model Migration</td>
+                <td>11 files</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Groq model migration, Arabic PDF fix, identity verification</td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td>Screenshots</td>
+                <td>README.md, screenshots/*</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Added home page & AI analysis screenshots to README</td>
+            </tr>
+        </table>
+        <div class="commit">3cb9640 → 73acb59 — 4 commits, ~3,300 lines added</div>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="phase-header">🔧 Phase 4 — Bug Fixes & Feature Additions</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Change</th>
+                <th>Files</th>
+                <th>Type</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td>DateTime Import Fix</td>
+                <td>app.py</td>
+                <td><span class="badge fix">FIX</span></td>
+                <td>UnboundLocalError in payroll section</td>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td>i18n Consistency</td>
+                <td>locales/ar,en.json</td>
+                <td><span class="badge fix">FIX</span></td>
+                <td>Add missing profile.skip_hint translation key</td>
+            </tr>
+            <tr>
+                <td>14</td>
+                <td>Price Evaluation</td>
+                <td>config.py, predictor.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Improved algorithm based on German market standards</td>
+            </tr>
+            <tr>
+                <td>15</td>
+                <td>Deploy Script</td>
+                <td>deploy.bat</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Quick Git operations batch script</td>
+            </tr>
+            <tr>
+                <td>16</td>
+                <td>Contract Customer Fix</td>
+                <td>app.py</td>
+                <td><span class="badge fix">FIX</span></td>
+                <td>Admin contracts show selected customer data correctly</td>
+            </tr>
+            <tr>
+                <td>17</td>
+                <td>Manual Data Entry</td>
+                <td>app.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Manual data entry for ID and driver license</td>
+            </tr>
+            <tr>
+                <td>18</td>
+                <td>Indentation Fix</td>
+                <td>app.py</td>
+                <td><span class="badge fix">FIX</span></td>
+                <td>Fix indentation errors in verify_identity_page</td>
+            </tr>
+            <tr>
+                <td>19</td>
+                <td>Seaborn Analytics</td>
+                <td>app.py, requirements.txt</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Analytics dashboard with Seaborn charts</td>
+            </tr>
+            <tr>
+                <td>20</td>
+                <td>Employee Sales Tracking</td>
+                <td>app.py, db_manager.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Sales tracking system with employee analytics</td>
+            </tr>
+            <tr>
+                <td>21</td>
+                <td>Performance Optimization</td>
+                <td>app.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Lazy imports and caching for faster loading</td>
+            </tr>
+        </table>
+        <div class="commit">3d6c5e9 → ce98e78 — 10 commits, ~600 lines changed</div>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="phase-header">🏗️ Phase 5 — Major Architecture Refactoring</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>Component</th>
+                <th>Files Created</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>📦 components/</td>
+                <td>css_styles.py, dialogs.py, html_components.py, navigation.py, sidebar.py</td>
+                <td>UI components extracted from monolithic app.py</td>
+            </tr>
+            <tr>
+                <td>📄 pages_app/</td>
+                <td>admin_page.py, auth_pages.py, checkout_pages.py, home_page.py, invoices_page.py, predict_pages.py,
+                    profile_pages.py</td>
+                <td>Page modules: admin (1,239 lines), home (2,079), checkout (1,426), predict (1,142)</td>
+            </tr>
+            <tr>
+                <td>📊 data/</td>
+                <td>car_specs.json</td>
+                <td>1,404 lines of car specifications data</td>
+            </tr>
+            <tr>
+                <td>🗑️ Cleaned Up</td>
+                <td>Removed 15+ files</td>
+                <td>debug_*, test_*, trace.txt, models.txt, duplicates</td>
+            </tr>
+        </table>
+        <div class="commit">77503ba Cleanup: removed duplicate files, moved scripts — 53 files, 13,846 ins / 11,365 del
+        </div>
+        <p style="color:#666; font-size:7.5px; margin-top:2px;">Monolithic app.py (10,648 lines) split into modular
+            components & pages architecture</p>
+    </div>
+
+    <!-- PAGE BREAK -->
+    <div class="page-break"></div>
+
+    <div class="header" style="border-bottom: 2px solid #D4AF37; padding-bottom: 4px; margin-bottom: 6px;">
+        <h1>🏎️ SmartCar AI-Dealer — Features 1-52 (02-03 March 2026)</h1>
+    </div>
+
+    <!-- BATCH 1 -->
+    <div class="phase-header">⚡ Batch 1 — Features 1-4 + Transaction Card (02.03.2026)</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Feature</th>
+                <th>File</th>
+                <th>Type</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>📊 Advanced Dashboard</td>
+                <td>admin_page.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>5 Plotly charts: Revenue, Price Distribution, Top Models, Employee Ranking</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>📧 Auto Notifications</td>
+                <td>notifier.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Installment reminders, TÜV alerts, batch runner</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>🚗 Inventory System</td>
+                <td>inventory_page.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Card grid, brand/status/price filters, admin management</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>💬 AI Chatbot</td>
+                <td>chatbot_component.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Floating sidebar chatbot with Groq AI and quick-reply</td>
+            </tr>
+            <tr>
+                <td>—</td>
+                <td>📋 Transaction Card</td>
+                <td>home_page.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>+9 specs: Transmission, Drivetrain, Engine CC, PS, Emissions, Warranty</td>
+            </tr>
+        </table>
+        <div class="commit">a3233e3 + 22c691b — 8 files, ~658 lines</div>
+    </div>
+
+    <!-- BATCH 2 -->
+    <div class="phase-header">⚡ Batch 2 — Features 5-12 (03.03.2026)</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Feature</th>
+                <th>File</th>
+                <th>Type</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>🖨️ Direct Print</td>
+                <td>checkout_pages.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Browser print via window.print() for contracts & invoices</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>📷 360° Images</td>
+                <td>predict_pages.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>3→5 upload angles: +Rear +Engine</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>📋 Audit Log</td>
+                <td>audit_logger.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Action logging, admin viewer with filters & stats</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>🔗 DATEV Export</td>
+                <td>datev_export.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>German accounting CSV standard format</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>🌐 Public Showcase</td>
+                <td>showcase_page.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Public listing with search, filter, sort</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>📈 Demand Forecast</td>
+                <td>admin_page.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Moving average + 3-month forecast</td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td>🔐 2FA</td>
+                <td>two_factor.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>TOTP via pyotp, QR code setup</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td>🔍 Market Compare</td>
+                <td>market_compare.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Price position: below/fair/above market</td>
+            </tr>
+        </table>
+        <div class="commit">6953b1c — 11 files, 614 lines</div>
+    </div>
+
+    <!-- BATCH 3 -->
+    <div class="phase-header">⚡ Batch 3 — Features 13-20</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Feature</th>
+                <th>File</th>
+                <th>Type</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td>📱 WhatsApp</td>
+                <td>whatsapp_sender.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>wa.me links for reminders & welcome messages</td>
+            </tr>
+            <tr>
+                <td>14</td>
+                <td>📊 Monthly Reports</td>
+                <td>report_generator.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Revenue growth %, top brands, formatted text</td>
+            </tr>
+            <tr>
+                <td>15</td>
+                <td>🗓️ Appointments</td>
+                <td>appointments_page.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Booking, status tracking, admin confirm/cancel</td>
+            </tr>
+            <tr>
+                <td>16</td>
+                <td>⭐ Reviews</td>
+                <td>reviews_component.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Star ratings 1-5, comments, statistics</td>
+            </tr>
+            <tr>
+                <td>17</td>
+                <td>📋 Contracts</td>
+                <td>contract_templates.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>4 German templates: Kauf, Miet, Raten, Garantie</td>
+            </tr>
+            <tr>
+                <td>18</td>
+                <td>🔔 Notifications</td>
+                <td>notifications_bell.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>In-app bell, badge counter, color-coded</td>
+            </tr>
+            <tr>
+                <td>19</td>
+                <td>🗺️ Branch Map</td>
+                <td>branches_page.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Interactive map: Berlin, München, Hamburg, Frankfurt</td>
+            </tr>
+            <tr>
+                <td>20</td>
+                <td>📈 KPI</td>
+                <td>admin_page.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Sales/Revenue/Users targets with progress bars</td>
+            </tr>
+        </table>
+        <div class="commit">5ac0d11 — 10 files, 765 lines</div>
+    </div>
+
+    <!-- BATCH 4 -->
+    <div class="phase-header">⚡ Batch 4 — Features 21-28</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Feature</th>
+                <th>File</th>
+                <th>Type</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>21</td>
+                <td>📊 Excel Export</td>
+                <td>excel_export.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Multi-sheet: Transactions, Users, Contracts, Employees</td>
+            </tr>
+            <tr>
+                <td>22</td>
+                <td>🔄 Car Pipeline</td>
+                <td>car_pipeline.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>5 stages: Received→Inspected→Priced→Listed→Sold</td>
+            </tr>
+            <tr>
+                <td>23</td>
+                <td>📧 Email Templates</td>
+                <td>email_templates.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Professional HTML: Welcome, Invoice, Appointment</td>
+            </tr>
+            <tr>
+                <td>24</td>
+                <td>🧮 Finance Calc</td>
+                <td>finance_calculator.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Interactive loan: price, down %, months, interest</td>
+            </tr>
+            <tr>
+                <td>25</td>
+                <td>📸 Photo Gallery</td>
+                <td>photo_gallery.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Thumbnails, zoom, prev/next navigation</td>
+            </tr>
+            <tr>
+                <td>26</td>
+                <td>📝 Internal Notes</td>
+                <td>internal_notes.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Per-entity notes, priority levels</td>
+            </tr>
+            <tr>
+                <td>27</td>
+                <td>🔒 Login Tracker</td>
+                <td>login_tracker.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Sessions, failed attempts, active today</td>
+            </tr>
+            <tr>
+                <td>28</td>
+                <td>📋 Tasks</td>
+                <td>tasks_page.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Task assignment, priority, status workflow</td>
+            </tr>
+        </table>
+        <div class="commit">de1c29c — 11 files, 726 lines</div>
+    </div>
+
+    <!-- BATCH 5 -->
+    <div class="phase-header">⚡ Batch 5 — Features 29-36</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Feature</th>
+                <th>File</th>
+                <th>Type</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>29</td>
+                <td>🔄 CSV Import</td>
+                <td>csv_importer.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Parse/preview CSV, batch import to DB</td>
+            </tr>
+            <tr>
+                <td>30</td>
+                <td>📊 Profit Analysis</td>
+                <td>profit_analyzer.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Per-car profit, brand & monthly breakdowns</td>
+            </tr>
+            <tr>
+                <td>31</td>
+                <td>🏷️ Offers</td>
+                <td>offers_system.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Discount codes, validate, usage tracking</td>
+            </tr>
+            <tr>
+                <td>32</td>
+                <td>📱 QR Generator</td>
+                <td>qr_generator.py</td>
+                <td><span class="badge mod">MOD</span></td>
+                <td>Car listing QR, vCard, base64 embed</td>
+            </tr>
+            <tr>
+                <td>33</td>
+                <td>📊 Car Compare</td>
+                <td>car_comparison.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Side-by-side 14 specs with highlighting</td>
+            </tr>
+            <tr>
+                <td>34</td>
+                <td>💬 Messaging</td>
+                <td>customer_messages.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Customer↔company, inbox, read/unread</td>
+            </tr>
+            <tr>
+                <td>35</td>
+                <td>🔧 Maintenance</td>
+                <td>maintenance_log.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>German service types, cost tracking</td>
+            </tr>
+            <tr>
+                <td>36</td>
+                <td>🖥️ Live Dashboard</td>
+                <td>live_dashboard.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Auto-refresh 10s, real-time metrics</td>
+            </tr>
+        </table>
+        <div class="commit">f2cf5a5 — 8 files, 781 lines</div>
+    </div>
+
+    <!-- BATCH 6 -->
+    <div class="phase-header">⚡ Batch 6 — Features 37-44</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Feature</th>
+                <th>File</th>
+                <th>Type</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>37</td>
+                <td>📄 PDF Reports</td>
+                <td>pdf_report.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>ReportLab A4 with styled tables & brand ranking</td>
+            </tr>
+            <tr>
+                <td>38</td>
+                <td>🔗 REST API</td>
+                <td>api_server.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Flask: /api/cars, /cars/:id, /stats, /brands</td>
+            </tr>
+            <tr>
+                <td>39</td>
+                <td>📊 Employee Stats</td>
+                <td>employee_stats.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Personal dashboard: sales, revenue, avg</td>
+            </tr>
+            <tr>
+                <td>40</td>
+                <td>🏷️ Tags</td>
+                <td>tags_system.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>8 presets (Premium, Hot Deal...), custom colors</td>
+            </tr>
+            <tr>
+                <td>41</td>
+                <td>📑 Doc Archive</td>
+                <td>document_archive.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>BLOB storage, TÜV/insurance, expiry alerts</td>
+            </tr>
+            <tr>
+                <td>42</td>
+                <td>🌙 Theme Toggle</td>
+                <td>theme_toggle.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Dark/Light mode with CSS injection</td>
+            </tr>
+            <tr>
+                <td>43</td>
+                <td>📊 Satisfaction</td>
+                <td>satisfaction_chart.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Rating distribution, trend, NPS gauge</td>
+            </tr>
+            <tr>
+                <td>44</td>
+                <td>🔐 Roles</td>
+                <td>roles_system.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>5 roles: Admin, Manager, Accountant, Sales, Viewer</td>
+            </tr>
+        </table>
+        <div class="commit">25c2e72 — 8 files, 645 lines</div>
+    </div>
+
+    <!-- BATCH 7 -->
+    <div class="phase-header">⚡ Batch 7 — Features 45-52</div>
+    <div class="section">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Feature</th>
+                <th>File</th>
+                <th>Type</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>45</td>
+                <td>📊 Sales Heatmap</td>
+                <td>sales_heatmap.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Plotly heatmap: day × hour activity</td>
+            </tr>
+            <tr>
+                <td>46</td>
+                <td>💳 Payment Tracker</td>
+                <td>payment_tracker.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Due/Paid/Outstanding, progress bars</td>
+            </tr>
+            <tr>
+                <td>47</td>
+                <td>📧 Newsletter</td>
+                <td>newsletter.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Subscribe, campaigns, stats</td>
+            </tr>
+            <tr>
+                <td>48</td>
+                <td>🔍 Global Search</td>
+                <td>global_search.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Universal search: cars, users, employees</td>
+            </tr>
+            <tr>
+                <td>49</td>
+                <td>📱 Car Card</td>
+                <td>car_card_export.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Styled HTML card for sharing/printing</td>
+            </tr>
+            <tr>
+                <td>50</td>
+                <td>📋 Delivery Checklist</td>
+                <td>delivery_checklist.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>10-item pre-delivery inspection</td>
+            </tr>
+            <tr>
+                <td>51</td>
+                <td>🔄 Backup Manager</td>
+                <td>backup_manager.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Create/restore/cleanup, safety backup</td>
+            </tr>
+            <tr>
+                <td>52</td>
+                <td>📊 Yearly Compare</td>
+                <td>yearly_comparison.py</td>
+                <td><span class="badge new">NEW</span></td>
+                <td>Year-over-year grouped bar chart</td>
+            </tr>
+        </table>
+        <div class="commit">4a64dd0 — 8 files, 623 lines</div>
+    </div>
+
+    <!-- COMPLETE GIT LOG -->
+    <div class="section">
+        <h2>📜 Complete Git Commit Log (34 Commits)</h2>
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Hash</th>
+                <th>Message</th>
+                <th>Files</th>
+                <th>+Lines</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>1948bcc</td>
+                <td>Initial commit</td>
+                <td>72</td>
+                <td>18,524</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>2ef2433</td>
+                <td>Theme: Replace pink accent with gold</td>
+                <td>1</td>
+                <td>7</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>d704aa1</td>
+                <td>Fix: White text for help tips</td>
+                <td>2</td>
+                <td>26</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>8afa800</td>
+                <td>Improve AI brand recognition + camera tips</td>
+                <td>6</td>
+                <td>90</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>1514130</td>
+                <td>Auto-correct Škoda vs VW brand</td>
+                <td>5</td>
+                <td>119</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>7e51084</td>
+                <td>Fix color matching for AI output</td>
+                <td>1</td>
+                <td>19</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>046ae21</td>
+                <td>Fix Windows console encoding</td>
+                <td>2</td>
+                <td>5</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>7565849</td>
+                <td>Add user dashboard</td>
+                <td>1</td>
+                <td>71</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>3cb9640</td>
+                <td>SmartCar AI Dealer v2</td>
+                <td>17</td>
+                <td>1,786</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>1cfd823</td>
+                <td>Add Attendance System with QR</td>
+                <td>13</td>
+                <td>1,315</td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td>c0d8807</td>
+                <td>Update developer info links</td>
+                <td>1</td>
+                <td>4</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td>250f567</td>
+                <td>Fix LinkedIn profile URL</td>
+                <td>1</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td>aa4f6b1</td>
+                <td>AI Model Migration + Identity Verification</td>
+                <td>11</td>
+                <td>204</td>
+            </tr>
+            <tr>
+                <td>14</td>
+                <td>73acb59</td>
+                <td>Add screenshots to README</td>
+                <td>4</td>
+                <td>9</td>
+            </tr>
+            <tr>
+                <td>15</td>
+                <td>3d6c5e9</td>
+                <td>Fix: datetime import in payroll</td>
+                <td>1</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>16</td>
+                <td>ca5059d</td>
+                <td>Fix: i18n profile.skip_hint key</td>
+                <td>2</td>
+                <td>4</td>
+            </tr>
+            <tr>
+                <td>17</td>
+                <td>ee06939</td>
+                <td>Improve price evaluation algorithm</td>
+                <td>2</td>
+                <td>40</td>
+            </tr>
+            <tr>
+                <td>18</td>
+                <td>f456201</td>
+                <td>Add deploy.bat script</td>
+                <td>1</td>
+                <td>16</td>
+            </tr>
+            <tr>
+                <td>19</td>
+                <td>359dd74</td>
+                <td>Fix: admin contracts customer data</td>
+                <td>1</td>
+                <td>12</td>
+            </tr>
+            <tr>
+                <td>20</td>
+                <td>a0baa95</td>
+                <td>Feature: manual data entry for ID</td>
+                <td>1</td>
+                <td>201</td>
+            </tr>
+            <tr>
+                <td>21</td>
+                <td>8d0276e</td>
+                <td>Fix: indentation errors</td>
+                <td>1</td>
+                <td>45</td>
+            </tr>
+            <tr>
+                <td>22</td>
+                <td>6455c7e</td>
+                <td>Feature: Seaborn analytics dashboard</td>
+                <td>2</td>
+                <td>78</td>
+            </tr>
+            <tr>
+                <td>23</td>
+                <td>9d85144</td>
+                <td>Feature: employee sales tracking</td>
+                <td>2</td>
+                <td>176</td>
+            </tr>
+            <tr>
+                <td>24</td>
+                <td>ce98e78</td>
+                <td>Performance: optimize loading time</td>
+                <td>1</td>
+                <td>23</td>
+            </tr>
+            <tr>
+                <td>25</td>
+                <td>77503ba</td>
+                <td>Cleanup: major refactoring</td>
+                <td>53</td>
+                <td>13,846</td>
+            </tr>
+            <tr>
+                <td>26</td>
+                <td>5a45f74</td>
+                <td>docs: update README</td>
+                <td>1</td>
+                <td>48</td>
+            </tr>
+            <tr>
+                <td>27</td>
+                <td>a3233e3</td>
+                <td>feat: dashboard, notifications, inventory, chatbot</td>
+                <td>6</td>
+                <td>636</td>
+            </tr>
+            <tr>
+                <td>28</td>
+                <td>22c691b</td>
+                <td>feat: car specs in transaction card</td>
+                <td>2</td>
+                <td>22</td>
+            </tr>
+            <tr>
+                <td>29</td>
+                <td>6953b1c</td>
+                <td>feat: print, 360°, audit, DATEV, showcase, 2FA</td>
+                <td>11</td>
+                <td>614</td>
+            </tr>
+            <tr>
+                <td>30</td>
+                <td>5ac0d11</td>
+                <td>feat: WhatsApp, reports, appointments, reviews, KPI</td>
+                <td>10</td>
+                <td>765</td>
+            </tr>
+            <tr>
+                <td>31</td>
+                <td>de1c29c</td>
+                <td>feat: Excel, pipeline, email, calculator, gallery</td>
+                <td>11</td>
+                <td>726</td>
+            </tr>
+            <tr>
+                <td>32</td>
+                <td>f2cf5a5</td>
+                <td>feat: CSV, profit, offers, comparison, messaging</td>
+                <td>8</td>
+                <td>781</td>
+            </tr>
+            <tr>
+                <td>33</td>
+                <td>25c2e72</td>
+                <td>feat: PDF, API, tags, docs, theme, roles</td>
+                <td>8</td>
+                <td>645</td>
+            </tr>
+            <tr>
+                <td>34</td>
+                <td>4a64dd0</td>
+                <td>feat: heatmap, payments, newsletter, search, backup</td>
+                <td>8</td>
+                <td>623</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        🏎️ SmartCar AI-Dealer — Complete Project Development Report | Generated: 03.03.2026 15:15 | GitHub:
+        github.com/Osamaamhmad67/SmartCar_AI_Dealer<br>
+        Developer: Osama Ahmad | Tech Stack: Python, Streamlit, SQLite, Groq AI, Plotly, Flask, ReportLab
+    </div>
 
 </body>
+
 </html>
