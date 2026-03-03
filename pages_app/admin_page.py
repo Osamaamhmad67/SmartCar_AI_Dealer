@@ -38,7 +38,7 @@ def admin_page():
     # القائمة الجانبية
     admin_menu = st.selectbox(
         t('admin.title'),
-        [t('admin.statistics'), '📊 مبيعات الموظفين', t('admin.users'), t('admin.employees'), t('admin.transactions'), t('admin.financial_settings')]
+        [t('admin.statistics'), '📊 مبيعات الموظفين', t('admin.users'), t('admin.employees'), t('admin.transactions'), t('admin.financial_settings'), f"📋 {t('admin.audit_log', 'Audit Log')}"]
     )
     
     db = DatabaseManager()
@@ -1230,6 +1230,35 @@ def admin_page():
                 
                 st.markdown("---")
                 
+                # 📈 Demand Forecast
+                st.subheader(f"📈 {t('admin.demand_forecast', 'Demand Forecast')}")
+                try:
+                    df_monthly = df_trans.set_index('created_at').resample('M').size().reset_index(name='count')
+                    if len(df_monthly) >= 3:
+                        # Simple moving average forecast
+                        df_monthly['forecast'] = df_monthly['count'].rolling(window=3, min_periods=1).mean()
+                        
+                        # Add 3 future months
+                        last_date = df_monthly['created_at'].max()
+                        last_avg = df_monthly['forecast'].iloc[-1]
+                        future_dates = pd.date_range(last_date + pd.DateOffset(months=1), periods=3, freq='M')
+                        df_future = pd.DataFrame({'created_at': future_dates, 'count': [None]*3, 'forecast': [last_avg]*3})
+                        df_all = pd.concat([df_monthly, df_future], ignore_index=True)
+                        
+                        import plotly.graph_objects as go
+                        fig_fc = go.Figure()
+                        fig_fc.add_trace(go.Bar(x=df_all['created_at'], y=df_all['count'], name=t('admin.actual', 'Actual'), marker_color='#3498db'))
+                        fig_fc.add_trace(go.Scatter(x=df_all['created_at'], y=df_all['forecast'], name=t('admin.forecast', 'Forecast'), 
+                            line=dict(color='#D4AF37', width=3, dash='dash'), mode='lines+markers'))
+                        fig_fc.update_layout(template='plotly_dark', title=t('admin.monthly_forecast', '📈 Monthly Transactions + 3-Month Forecast'))
+                        st.plotly_chart(fig_fc, use_container_width=True)
+                    else:
+                        st.info(t('admin.need_more_data', 'Need at least 3 months of data for forecast'))
+                except Exception as e:
+                    st.info(f"{t('admin.forecast_unavailable', 'Forecast unavailable')}: {e}")
+                
+                st.markdown("---")
+                
                 # 5. Quick Stats Summary Cards
                 st.subheader(f"📋 {t('admin.quick_summary', 'Quick Summary')}")
                 
@@ -1317,6 +1346,34 @@ def admin_page():
                         st.error(f"❌ Error: {e}")
         
 
+        # DATEV Export Section
+        st.markdown("---")
+        st.markdown(f"### 📊 {t('admin.datev_export', 'DATEV Export')}")
+        st.caption(t('admin.datev_hint', 'Export data in DATEV-compatible CSV format for German accounting'))
+        
+        datev_c1, datev_c2 = st.columns(2)
+        with datev_c1:
+            if st.button(f"📊 {t('admin.export_transactions', 'Export Transactions CSV')}", use_container_width=True):
+                try:
+                    from utils.datev_export import DATEVExporter
+                    csv_data = DATEVExporter.export_transactions()
+                    st.download_button("⬇️ Download DATEV Transactions", csv_data, 
+                        file_name=f"DATEV_Transactions_{datetime.now().strftime('%Y%m%d')}.csv",
+                        mime="text/csv", key="dl_datev_trans")
+                except Exception as e:
+                    st.error(f"❌ {e}")
+        with datev_c2:
+            if st.button(f"🧾 {t('admin.export_invoices', 'Export Invoices CSV')}", use_container_width=True):
+                try:
+                    from utils.datev_export import DATEVExporter
+                    csv_data = DATEVExporter.export_invoices()
+                    st.download_button("⬇️ Download DATEV Invoices", csv_data,
+                        file_name=f"DATEV_Invoices_{datetime.now().strftime('%Y%m%d')}.csv",
+                        mime="text/csv", key="dl_datev_inv")
+                except Exception as e:
+                    st.error(f"❌ {e}")
+
+        st.markdown("---")
         st.markdown(f"### ⛽ {t('admin.fuel_price_settings')}")
         st.caption(t('admin.fuel_settings_hint'))
         
@@ -1373,6 +1430,65 @@ def admin_page():
                 except Exception as e:
                     st.error(f"❌ {t('admin.save_error')}: {e}")
 
+
+    elif admin_menu == f"📋 {t('admin.audit_log', 'Audit Log')}":
+        st.subheader(f"📋 {t('admin.audit_log', 'Audit Log')}")
+        
+        from utils.audit_logger import AuditLogger
+        
+        # Stats
+        audit_stats = AuditLogger.get_stats()
+        s1, s2, s3 = st.columns(3)
+        s1.metric(t('admin.total_events', 'Total Events'), audit_stats['total'])
+        s2.metric(t('admin.today_events', 'Today'), audit_stats['today'])
+        s3.metric(t('admin.top_action', 'Top Action'), audit_stats['top_actions'][0][0] if audit_stats['top_actions'] else '-')
+        
+        st.markdown("---")
+        
+        # Filters
+        f1, f2, f3 = st.columns(3)
+        with f1:
+            action_filter = st.selectbox(t('admin.filter_action', 'Filter Action'), 
+                [''] + ['login', 'logout', 'login_failed', 'user_create', 'transaction_create', 'contract_create', 'invoice_create', 'payment_record', 'settings_change', 'ai_analysis', 'backup_create'],
+                key="audit_action_filter")
+        with f2:
+            user_filter = st.text_input(t('admin.filter_user', 'Filter User'), key="audit_user_filter")
+        with f3:
+            limit = st.number_input(t('admin.limit', 'Limit'), min_value=10, max_value=500, value=50, step=10)
+        
+        logs = AuditLogger.get_logs(limit=limit, 
+            action_filter=action_filter if action_filter else None,
+            user_filter=user_filter if user_filter else None)
+        
+        if logs:
+            action_colors = {
+                'login': '#27ae60', 'logout': '#95a5a6', 'login_failed': '#e74c3c',
+                'transaction_create': '#3498db', 'contract_create': '#9b59b6',
+                'invoice_create': '#f39c12', 'payment_record': '#2ecc71',
+                'settings_change': '#e67e22', 'ai_analysis': '#1abc9c',
+                'backup_create': '#34495e', 'user_create': '#2980b9'
+            }
+            
+            for log_entry in logs:
+                action = log_entry.get('action', '')
+                color = action_colors.get(action, '#7f8c8d')
+                created = log_entry.get('created_at', '')[:19]
+                user = log_entry.get('username', '-')
+                details = log_entry.get('details', '')
+                entity = f"{log_entry.get('entity_type', '')} #{log_entry.get('entity_id', '')}" if log_entry.get('entity_type') else ''
+                
+                st.markdown(f"""
+                <div style="background: #16213e; padding: 10px 15px; border-radius: 8px; margin: 5px 0; border-left: 4px solid {color}; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="background: {color}22; color: {color}; padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">{action}</span>
+                        <span style="color: white; margin-left: 10px;">👤 {user}</span>
+                        <span style="color: #a0a0c0; margin-left: 10px;">{entity}</span>
+                    </div>
+                    <span style="color: #a0a0c0; font-size: 0.8em;">🕐 {created}</span>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info(t('admin.no_audit_logs', 'No audit logs found'))
 
 
 

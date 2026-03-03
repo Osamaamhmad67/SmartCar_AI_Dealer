@@ -88,6 +88,11 @@ def render_sidebar():
                     type="primary" if st.session_state.page == "inventory" else "secondary"):
             navigate_to("inventory")
         
+        # Showcase button
+        if st.button(f"🌐 {t('nav.showcase', 'Showcase')}", use_container_width=True, 
+                    type="primary" if st.session_state.page == "showcase" else "secondary"):
+            navigate_to("showcase")
+        
         st.markdown("---")
         
         if st.button(f"🚪 {t('app.logout')}", use_container_width=True):

@@ -93,6 +93,7 @@ from pages_app.admin_page import admin_page
 from pages_app.checkout_pages import verify_identity_page, checkout_page
 from pages_app.inventory_page import inventory_page
 from components.chatbot_component import render_chatbot
+from pages_app.showcase_page import showcase_page
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -245,7 +246,8 @@ def main():
             'profile': profile_page,
             'change_password': change_password_page,
             'admin': admin_page,
-            'inventory': inventory_page
+            'inventory': inventory_page,
+            'showcase': showcase_page
         }
         
         current_page = st.session_state.page

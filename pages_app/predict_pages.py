@@ -237,6 +237,17 @@ def predict_page():
             st.markdown(f"**3. {t('predict.interior_image')}**")
             interior_img = st.file_uploader(t('predict.interior_image'), type=['jpg', 'jpeg', 'png', 'webp'], key="up_interior")
 
+        # صف ثاني: المؤخرة + المحرك
+        col_up4, col_up5, _ = st.columns(3)
+        
+        with col_up4:
+            st.markdown(f"**4. {t('predict.rear_image', 'Rear View')}** 🔙")
+            rear_img = st.file_uploader(t('predict.rear_image', 'Rear view'), type=['jpg', 'jpeg', 'png', 'webp'], key="up_rear")
+        
+        with col_up5:
+            st.markdown(f"**5. {t('predict.engine_image', 'Engine')}** ⚙️")
+            engine_img = st.file_uploader(t('predict.engine_image', 'Engine compartment'), type=['jpg', 'jpeg', 'png', 'webp'], key="up_engine")
+
         # تجميع الصور
         
         if front_img:
@@ -248,6 +259,13 @@ def predict_page():
             
         if interior_img:
             images_to_analyze['interior'] = interior_img.getvalue()
+
+        if rear_img:
+            images_to_analyze['rear'] = rear_img.getvalue()
+            
+        if engine_img:
+            images_to_analyze['engine'] = engine_img.getvalue()
+
 
     with image_tab2:
         # تلميح مهم للمستخدم

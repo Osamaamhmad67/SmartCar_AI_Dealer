@@ -1166,7 +1166,18 @@ EUR{amount_to_pay:.2f}
                     
                     if 'chk_draft_contract' in st.session_state:
                          with open(st.session_state['chk_draft_contract'], "rb") as f:
-                             st.download_button(f"⬇️ {t('buttons.download')}", f, file_name="Draft_Contract.pdf", key="dl_chk_contract", use_container_width=True)
+                             pdf_bytes = f.read()
+                             dl_c1, dl_c2 = st.columns(2)
+                             with dl_c1:
+                                 st.download_button(f"⬇️ {t('buttons.download')}", pdf_bytes, file_name="Draft_Contract.pdf", key="dl_chk_contract", use_container_width=True)
+                             with dl_c2:
+                                 import base64
+                                 b64 = base64.b64encode(pdf_bytes).decode()
+                                 st.markdown(f"""
+                                 <a href="javascript:void(0)" onclick="var w=window.open();w.document.write('<iframe width=100% height=100% src=\\'data:application/pdf;base64,{b64}\\'></iframe>');setTimeout(function(){{w.print()}},500);"
+                                    style="display:inline-block;width:100%;text-align:center;padding:8px;background:#D4AF37;color:black;border-radius:8px;text-decoration:none;font-weight:bold;">
+                                    🖨️ {t('buttons.print', 'Print')}
+                                 </a>""", unsafe_allow_html=True)
 
                 with col_invoice:
                     if st.button(f"🧾 {t('admin.invoice')}", key="chk_pref_invoice", use_container_width=True):
@@ -1230,7 +1241,18 @@ EUR{amount_to_pay:.2f}
 
                     if 'chk_draft_invoice' in st.session_state:
                          with open(st.session_state['chk_draft_invoice'], "rb") as f:
-                             st.download_button(f"⬇️ {t('buttons.download')}", f, file_name="All_Invoices.pdf", key="dl_chk_invoice", use_container_width=True)
+                             pdf_bytes_inv = f.read()
+                             dl_i1, dl_i2 = st.columns(2)
+                             with dl_i1:
+                                 st.download_button(f"⬇️ {t('buttons.download')}", pdf_bytes_inv, file_name="All_Invoices.pdf", key="dl_chk_invoice", use_container_width=True)
+                             with dl_i2:
+                                 import base64
+                                 b64_inv = base64.b64encode(pdf_bytes_inv).decode()
+                                 st.markdown(f"""
+                                 <a href="javascript:void(0)" onclick="var w=window.open();w.document.write('<iframe width=100% height=100% src=\\'data:application/pdf;base64,{b64_inv}\\'></iframe>');setTimeout(function(){{w.print()}},500);"
+                                    style="display:inline-block;width:100%;text-align:center;padding:8px;background:#D4AF37;color:black;border-radius:8px;text-decoration:none;font-weight:bold;">
+                                    🖨️ {t('buttons.print', 'Print')}
+                                 </a>""", unsafe_allow_html=True)
 
                 # --- زر التأكيد (يظهر للكل) ---
                 st.write("---")
