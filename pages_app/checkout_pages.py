@@ -1174,7 +1174,7 @@ EUR{amount_to_pay:.2f}
                                  import base64
                                  b64 = base64.b64encode(pdf_bytes).decode()
                                  st.markdown(f"""
-                                 <a href="javascript:void(0)" onclick="var w=window.open();w.document.write('<iframe width=100% height=100% src=\\'data:application/pdf;base64,{b64}\\'></iframe>');setTimeout(function(){{w.print()}},500);"
+                                 <a href="data:application/pdf;base64,{b64}" target="_blank"
                                     style="display:inline-block;width:100%;text-align:center;padding:8px;background:#D4AF37;color:black;border-radius:8px;text-decoration:none;font-weight:bold;">
                                     🖨️ {t('buttons.print', 'Print')}
                                  </a>""", unsafe_allow_html=True)
@@ -1249,7 +1249,7 @@ EUR{amount_to_pay:.2f}
                                  import base64
                                  b64_inv = base64.b64encode(pdf_bytes_inv).decode()
                                  st.markdown(f"""
-                                 <a href="javascript:void(0)" onclick="var w=window.open();w.document.write('<iframe width=100% height=100% src=\\'data:application/pdf;base64,{b64_inv}\\'></iframe>');setTimeout(function(){{w.print()}},500);"
+                                 <a href="data:application/pdf;base64,{b64_inv}" target="_blank"
                                     style="display:inline-block;width:100%;text-align:center;padding:8px;background:#D4AF37;color:black;border-radius:8px;text-decoration:none;font-weight:bold;">
                                     🖨️ {t('buttons.print', 'Print')}
                                  </a>""", unsafe_allow_html=True)
