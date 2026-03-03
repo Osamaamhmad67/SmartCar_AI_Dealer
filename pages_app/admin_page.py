@@ -1283,6 +1283,19 @@ def admin_page():
     elif admin_menu == t('admin.financial_settings'):
         st.subheader(f"⚙️ {t('admin.system_settings')}")
         
+        # Excel Export
+        if st.button(f"📊 {t('admin.export_excel', 'Export All Data (Excel)')}", use_container_width=True, type="primary"):
+            try:
+                from utils.excel_export import ExcelExporter
+                data = ExcelExporter.export_all_data()
+                st.download_button("⬇️ Download Excel", data, 
+                    file_name=f"SmartCar_Export_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="dl_excel")
+            except Exception as e:
+                st.error(f"❌ {e}")
+        
+        st.markdown("---")
+        
         col1, col2 = st.columns(2)
         
         with col1:

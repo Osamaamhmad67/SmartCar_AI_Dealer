@@ -103,6 +103,11 @@ def render_sidebar():
                     type="primary" if st.session_state.page == "branches" else "secondary"):
             navigate_to("branches")
         
+        # Tasks button
+        if st.button(f"📋 {t('nav.tasks', 'Tasks')}", use_container_width=True, 
+                    type="primary" if st.session_state.page == "tasks" else "secondary"):
+            navigate_to("tasks")
+        
         st.markdown("---")
         
         if st.button(f"🚪 {t('app.logout')}", use_container_width=True):

@@ -98,6 +98,7 @@ from pages_app.appointments_page import appointments_page
 from pages_app.branches_page import branches_page
 from components.notifications_bell import render_notification_bell
 from components.reviews_component import render_reviews
+from pages_app.tasks_page import tasks_page
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -254,7 +255,8 @@ def main():
             'inventory': inventory_page,
             'showcase': showcase_page,
             'appointments': appointments_page,
-            'branches': branches_page
+            'branches': branches_page,
+            'tasks': tasks_page
         }
         
         current_page = st.session_state.page
