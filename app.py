@@ -94,6 +94,10 @@ from pages_app.checkout_pages import verify_identity_page, checkout_page
 from pages_app.inventory_page import inventory_page
 from components.chatbot_component import render_chatbot
 from pages_app.showcase_page import showcase_page
+from pages_app.appointments_page import appointments_page
+from pages_app.branches_page import branches_page
+from components.notifications_bell import render_notification_bell
+from components.reviews_component import render_reviews
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -235,6 +239,7 @@ def main():
         # المستخدم مسجل الدخول
         render_sidebar()
         render_chatbot()
+        render_notification_bell()
         
         page_handlers = {
             'home': home_page,
@@ -247,7 +252,9 @@ def main():
             'change_password': change_password_page,
             'admin': admin_page,
             'inventory': inventory_page,
-            'showcase': showcase_page
+            'showcase': showcase_page,
+            'appointments': appointments_page,
+            'branches': branches_page
         }
         
         current_page = st.session_state.page

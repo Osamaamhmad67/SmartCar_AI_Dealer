@@ -38,7 +38,7 @@ def admin_page():
     # القائمة الجانبية
     admin_menu = st.selectbox(
         t('admin.title'),
-        [t('admin.statistics'), '📊 مبيعات الموظفين', t('admin.users'), t('admin.employees'), t('admin.transactions'), t('admin.financial_settings'), f"📋 {t('admin.audit_log', 'Audit Log')}"]
+        [t('admin.statistics'), '📊 مبيعات الموظفين', t('admin.users'), t('admin.employees'), t('admin.transactions'), t('admin.financial_settings'), f"📋 {t('admin.audit_log', 'Audit Log')}", f"📈 {t('admin.kpi', 'KPI Dashboard')}", f"📊 {t('admin.monthly_report', 'Monthly Report')}"]
     )
     
     db = DatabaseManager()
@@ -1489,6 +1489,76 @@ def admin_page():
                 """, unsafe_allow_html=True)
         else:
             st.info(t('admin.no_audit_logs', 'No audit logs found'))
+
+    elif admin_menu == f"📈 {t('admin.kpi', 'KPI Dashboard')}":
+        st.subheader(f"📈 {t('admin.kpi', 'KPI Dashboard')}")
+        
+        stats = db.get_statistics()
+        
+        # KPI targets (configurable)
+        targets = {
+            'monthly_sales': st.sidebar.number_input(t('admin.target_sales', 'Target Sales/Month'), value=20, key="kpi_sales"),
+            'monthly_revenue': st.sidebar.number_input(t('admin.target_revenue', 'Target Revenue (€)'), value=200000, step=10000, key="kpi_rev"),
+            'monthly_users': st.sidebar.number_input(t('admin.target_users', 'Target New Users'), value=10, key="kpi_users"),
+        }
+        
+        import pandas as pd
+        # Get current month data
+        with db.get_connection() as conn:
+            current_month = pd.Timestamp.now().strftime('%Y-%m')
+            cur_sales = pd.read_sql_query(f"SELECT COUNT(*) as c FROM transactions WHERE created_at LIKE '{current_month}%'", conn).iloc[0]['c']
+            cur_revenue = pd.read_sql_query(f"SELECT COALESCE(SUM(estimated_price),0) as r FROM transactions WHERE created_at LIKE '{current_month}%'", conn).iloc[0]['r']
+            cur_users = pd.read_sql_query(f"SELECT COUNT(*) as c FROM users WHERE created_at LIKE '{current_month}%'", conn).iloc[0]['c']
+        
+        kpis = [
+            ('🛒', t('admin.sales', 'Sales'), cur_sales, targets['monthly_sales']),
+            ('💰', t('admin.revenue', 'Revenue'), cur_revenue, targets['monthly_revenue']),
+            ('👥', t('admin.new_users', 'New Users'), cur_users, targets['monthly_users']),
+        ]
+        
+        cols = st.columns(3)
+        for i, (icon, label, actual, target) in enumerate(kpis):
+            with cols[i]:
+                pct = min((actual / max(target, 1)) * 100, 100)
+                color = '#27ae60' if pct >= 80 else '#f39c12' if pct >= 50 else '#e74c3c'
+                st.markdown(f"""
+                <div style="background: #16213e; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid {color}33;">
+                    <div style="font-size: 2em;">{icon}</div>
+                    <div style="color: #D4AF37; font-weight: bold;">{label}</div>
+                    <div style="color: white; font-size: 1.8em; font-weight: bold;">{actual:,.0f}</div>
+                    <div style="color: #a0a0c0;">/ {target:,.0f} target</div>
+                    <div style="background: #1a1a2e; border-radius: 10px; height: 8px; margin-top: 10px;">
+                        <div style="background: {color}; width: {pct:.0f}%; height: 8px; border-radius: 10px;"></div>
+                    </div>
+                    <div style="color: {color}; font-size: 0.9em; margin-top: 5px;">{pct:.0f}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    elif admin_menu == f"📊 {t('admin.monthly_report', 'Monthly Report')}":
+        st.subheader(f"📊 {t('admin.monthly_report', 'Monthly Report')}")
+        
+        from utils.report_generator import ReportGenerator
+        
+        rc1, rc2 = st.columns(2)
+        with rc1:
+            report_year = st.number_input("Year", value=datetime.now().year, key="rep_year")
+        with rc2:
+            report_month = st.number_input("Month", min_value=1, max_value=12, value=datetime.now().month, key="rep_month")
+        
+        if st.button(f"📊 {t('admin.generate_report', 'Generate Report')}", type="primary", use_container_width=True):
+            data = ReportGenerator.get_monthly_summary(int(report_year), int(report_month))
+            report_text = ReportGenerator.format_report_text(data)
+            
+            st.code(report_text)
+            
+            st.download_button(f"⬇️ Download Report", report_text, 
+                file_name=f"Report_{report_year}_{report_month:02d}.txt",
+                mime="text/plain", key="dl_report")
+            
+            # WhatsApp share
+            from utils.whatsapp_sender import WhatsAppSender
+            wa_link = WhatsAppSender.generate_link("", f"SmartCar Report {report_month}/{report_year}")
+            st.markdown(f"[📱 Share via WhatsApp]({wa_link})")
 
 
 

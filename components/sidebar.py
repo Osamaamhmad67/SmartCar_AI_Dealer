@@ -93,6 +93,16 @@ def render_sidebar():
                     type="primary" if st.session_state.page == "showcase" else "secondary"):
             navigate_to("showcase")
         
+        # Appointments button
+        if st.button(f"🗓️ {t('nav.appointments', 'Appointments')}", use_container_width=True, 
+                    type="primary" if st.session_state.page == "appointments" else "secondary"):
+            navigate_to("appointments")
+        
+        # Branches button
+        if st.button(f"🗺️ {t('nav.branches', 'Branches')}", use_container_width=True, 
+                    type="primary" if st.session_state.page == "branches" else "secondary"):
+            navigate_to("branches")
+        
         st.markdown("---")
         
         if st.button(f"🚪 {t('app.logout')}", use_container_width=True):
