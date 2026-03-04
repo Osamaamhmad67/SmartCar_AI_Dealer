@@ -1167,7 +1167,7 @@ EUR{amount_to_pay:.2f}
                     if 'chk_draft_contract' in st.session_state:
                          with open(st.session_state['chk_draft_contract'], "rb") as f:
                              pdf_bytes = f.read()
-                                                      st.download_button(f"⬇️ {t('buttons.download')}", pdf_bytes, file_name="Draft_Contract.pdf", key="dl_chk_contract", use_container_width=True)
+                             st.download_button(f"⬇️ {t('buttons.download')}", pdf_bytes, file_name="Draft_Contract.pdf", key="dl_chk_contract", use_container_width=True)
                 with col_invoice:
                     if st.button(f"🧾 {t('admin.invoice')}", key="chk_pref_invoice", use_container_width=True):
                          try:
@@ -1231,7 +1231,7 @@ EUR{amount_to_pay:.2f}
                     if 'chk_draft_invoice' in st.session_state:
                          with open(st.session_state['chk_draft_invoice'], "rb") as f:
                              pdf_bytes_inv = f.read()
-                                                      st.download_button(f"⬇️ {t('buttons.download')}", pdf_bytes_inv, file_name="All_Invoices.pdf", key="dl_chk_invoice", use_container_width=True)
+                             st.download_button(f"⬇️ {t('buttons.download')}", pdf_bytes_inv, file_name="All_Invoices.pdf", key="dl_chk_invoice", use_container_width=True)
                 # --- زر التأكيد (يظهر للكل) ---
                 st.write("---")
                 
