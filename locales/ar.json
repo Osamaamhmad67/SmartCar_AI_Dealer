@@ -21,7 +21,12 @@
     "checkout": "الدفع والتعاقد",
     "help": "مساعدة",
     "features": "الميزات",
-    "about": "عن التطبيق"
+    "about": "عن التطبيق",
+    "inventory": "المخزون",
+    "showcase": "المعرض",
+    "appointments": "المواعيد",
+    "branches": "الفروع",
+    "tasks": "المهام"
   },
   "login": {
     "title": "تسجيل الدخول",
@@ -952,5 +957,11 @@
     "monthly_total": "Monthly Total",
     "visual_analytics": "Visual Analytics",
     "employee_sales_comparison": "Employee Sales Comparison"
+  },
+  "chat": {
+    "title": "المساعد الذكي"
+  },
+  "notifications": {
+    "title": "الإشعارات"
   }
 }
