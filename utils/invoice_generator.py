@@ -204,6 +204,32 @@ class InvoiceGenerator:
         pdf.cell(0, 10, "Vehicle Details / Fahrzeugdetails:", ln=True, fill=True)
         pdf.set_font(font_name, '', 11)
         
+        # صورة السيارة بشكل احترافي
+        img_path = transaction_data.get('image_path', '')
+        if (not img_path or img_path == 'stored_in_session') and hasattr(st, 'session_state'):
+            img_path = st.session_state.get('car_image_path', '')
+        if img_path and img_path != 'stored_in_session' and os.path.exists(str(img_path)):
+            try:
+                img_w = 80
+                img_x = (210 - img_w) / 2
+                img_y = pdf.get_y() + 2
+                pdf.set_draw_color(180, 180, 180)
+                pdf.set_line_width(0.5)
+                pdf.rect(img_x - 2, img_y - 2, img_w + 4, 54)
+                pdf.image(str(img_path), x=img_x, y=img_y, w=img_w)
+                pdf.set_y(img_y + 52)
+                pdf.set_font(font_name, '', 8)
+                pdf.set_text_color(120, 120, 120)
+                car_cap = f"{transaction_data.get('brand', '')} {transaction_data.get('model', '')} ({transaction_data.get('manufacture_year', '')})"
+                pdf.cell(0, 5, car_cap.strip(), align='C', ln=True)
+                pdf.set_text_color(0, 0, 0)
+                pdf.set_font(font_name, '', 11)
+                pdf.set_draw_color(0, 0, 0)
+                pdf.set_line_width(0.2)
+                pdf.ln(3)
+            except Exception as e:
+                print(f"Invoice image error: {e}")
+        
         details = [
             ("Brand / Marke", transaction_data.get('brand', 'Unknown')),
             ("Model / Modell", transaction_data.get('model', 'Unknown')),
@@ -423,13 +449,42 @@ class InvoiceGenerator:
         pdf.set_font(font_name, '', 11)
         pdf.ln(3)
         
-        # صورة السيارة إذا كانت متوفرة
+        # صورة السيارة بشكل احترافي
         image_path = contract_data.get('image_path', '')
-        if image_path and image_path != 'stored_in_session' and os.path.exists(image_path):
+        # Try session state image path as fallback
+        if (not image_path or image_path == 'stored_in_session') and hasattr(st, 'session_state'):
+            image_path = st.session_state.get('car_image_path', '')
+        
+        if image_path and image_path != 'stored_in_session' and os.path.exists(str(image_path)):
             try:
-                pdf.image(image_path, x=140, y=pdf.get_y(), w=60)
-            except:
-                pass
+                # Professional car image display - centered with frame
+                img_w = 80  # width in mm
+                img_x = (210 - img_w) / 2  # center horizontally
+                img_y = pdf.get_y()
+                
+                # Draw gray frame/border around image
+                pdf.set_draw_color(180, 180, 180)
+                pdf.set_line_width(0.5)
+                pdf.rect(img_x - 2, img_y - 2, img_w + 4, 54)
+                
+                # Insert the image
+                pdf.image(str(image_path), x=img_x, y=img_y, w=img_w)
+                
+                # Caption below image
+                pdf.set_y(img_y + 52)
+                pdf.set_font(font_name, '', 8)
+                pdf.set_text_color(120, 120, 120)
+                car_caption = f"{contract_data.get('brand', '')} {contract_data.get('model', '')} ({contract_data.get('manufacture_year', '')})"
+                pdf.cell(0, 5, car_caption.strip(), align='C', ln=True)
+                pdf.set_text_color(0, 0, 0)
+                pdf.set_font(font_name, '', 11)
+                pdf.ln(3)
+                
+                # Reset draw settings
+                pdf.set_draw_color(0, 0, 0)
+                pdf.set_line_width(0.2)
+            except Exception as e:
+                print(f"Image error: {e}")
         
         # Parse condition if it's JSON
         condition_raw = contract_data.get('condition', contract_data.get('condition_analysis', 'Standard'))
