@@ -70,20 +70,12 @@ def render_chatbot():
 
 
 def _quick(topic):
-    """Pre-built quick answers"""
+    """Pre-built quick answers - translated"""
     qa = {
-        "pricing": ("How is pricing done?",
-            "Our AI analyzes 20+ factors:\n• Brand & Model\n• Year & Mileage\n"
-            "• Condition (1-10)\n• TÜV & Equipment\n• Market trends\n\nUpload a photo for instant estimate! 📷"),
-        "installment": ("Installment plans?",
-            "Flexible plans available:\n• Down payment from 20%\n• 6-48 monthly installments\n"
-            "• Competitive rates\n• Online tracking\n• QR-verified invoices 💰"),
-        "ai": ("How does AI analysis work?",
-            "1. 📷 Upload car photos\n2. 🤖 AI identifies brand, model, color\n"
-            "3. 🔍 Condition assessment\n4. 💰 Price estimate\n5. 📄 Professional report\n\nResults in seconds! 🚀"),
-        "contact": ("Contact info?",
-            "📧 support@smartcar-ai.com\n📞 +49 123 456 789\n"
-            "🕐 Mon-Sat 9:00-18:00\n📍 Visit our showroom\n\nHappy to help! 😊")
+        "pricing": (t('chat.qa_pricing_q', 'How is pricing done?'), t('chat.qa_pricing_a', "Our AI analyzes 20+ factors")),
+        "installment": (t('chat.qa_installment_q', 'Installment plans?'), t('chat.qa_installment_a', "Flexible plans available")),
+        "ai": (t('chat.qa_ai_q', 'How does AI analysis work?'), t('chat.qa_ai_a', "Upload car photos...")),
+        "contact": (t('chat.qa_contact_q', 'Contact info?'), t('chat.qa_contact_a', "support@smartcar-ai.com"))
     }
     if topic in qa:
         q, a = qa[topic]

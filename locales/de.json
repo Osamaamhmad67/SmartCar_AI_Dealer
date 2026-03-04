@@ -946,7 +946,23 @@
     "no_sales_data": "Keine Umsatzdaten für diesen Monat"
   },
   "chat": {
-    "title": "KI-Assistent"
+    "title": "KI-Assistent",
+    "subtitle": "Fragen Sie zu Autos, Preisen oder Dienstleistungen!",
+    "quick_questions": "Schnelle Fragen",
+    "q_price": "Preise?",
+    "q_inst": "Ratenzahlung?",
+    "q_ai": "KI-Analyse?",
+    "q_contact": "Kontakt?",
+    "placeholder": "Schreiben Sie Ihre Frage...",
+    "error": "Entschuldigung, Ihre Anfrage konnte nicht verarbeitet werden. Bitte kontaktieren Sie support@smartcar-ai.com 📧",
+    "qa_pricing_q": "Wie funktioniert die Preisermittlung?",
+    "qa_pricing_a": "Unsere KI analysiert über 20 Faktoren:\n• Marke & Modell\n• Baujahr & Kilometerstand\n• Zustand (1-10)\n• TÜV & Ausstattung\n• Markttrends\n\nLaden Sie ein Foto hoch für eine sofortige Schätzung! 📷",
+    "qa_installment_q": "Ratenzahlungspläne?",
+    "qa_installment_a": "Flexible Pläne verfügbar:\n• Anzahlung ab 20%\n• 6-48 monatliche Raten\n• Wettbewerbsfähige Zinsen\n• Online-Tracking\n• QR-verifizierte Rechnungen 💰",
+    "qa_ai_q": "Wie funktioniert die KI-Analyse?",
+    "qa_ai_a": "1. 📷 Fahrzeugfotos hochladen\n2. 🤖 KI erkennt Marke, Modell, Farbe\n3. 🔍 Zustandsbewertung\n4. 💰 Preisschätzung\n5. 📄 Professioneller Bericht\n\nErgebnisse in Sekunden! 🚀",
+    "qa_contact_q": "Kontaktinformationen?",
+    "qa_contact_a": "📧 support@smartcar-ai.com\n📞 +49 123 456 789\n🕐 Mo-Sa 9:00-18:00\n📍 Besuchen Sie unseren Showroom\n\nWir helfen gerne! 😊"
   },
   "notifications": {
     "title": "Benachrichtigungen"
