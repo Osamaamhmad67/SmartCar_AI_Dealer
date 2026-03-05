@@ -724,6 +724,9 @@ def profile_page():
                             with col_c2:
                                 if st.button(f"📄 {t('contracts.print_contract')}", key=f"print_k_{contract['id']}"):
                                     st.session_state.selected_transaction = contract
+                                    # إضافة مسار الصورة
+                                    if t_data.get('image_path') and t_data.get('image_path') != 'stored_in_session':
+                                        car_info['image_path'] = t_data.get('image_path')
                                     st.session_state.car_data = car_info
                                     st.session_state.estimated_price = total
                                     st.session_state.last_transaction_id = contract['id']
@@ -735,6 +738,9 @@ def profile_page():
                             with col_c3:
                                 if st.button(f"🧾 {t('contracts.print_invoices')}", key=f"print_invoices_{contract['id']}"):
                                     st.session_state.selected_transaction = contract
+                                    # إضافة مسار الصورة
+                                    if t_data.get('image_path') and t_data.get('image_path') != 'stored_in_session':
+                                        car_info['image_path'] = t_data.get('image_path')
                                     st.session_state.car_data = car_info
                                     st.session_state.estimated_price = total
                                     st.session_state.last_transaction_id = contract['id']

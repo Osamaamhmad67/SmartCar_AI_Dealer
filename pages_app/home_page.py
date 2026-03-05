@@ -1902,6 +1902,9 @@ def home_page():
                                             'condition': c.get('condition', ''),
                                             'color': c.get('color', '')
                                         }
+                                    # إضافة مسار الصورة من المعاملة
+                                    if c.get('image_path') and c.get('image_path') != 'stored_in_session':
+                                        final_car_data['image_path'] = c.get('image_path')
                                     st.session_state.car_data = final_car_data
                                     st.session_state.car_details = final_car_data  # مهم لصفحة الدفع
                                     st.session_state.estimated_price = c.get('total_amount', 0)
@@ -1943,6 +1946,9 @@ def home_page():
                                             'condition': c.get('condition', ''),
                                             'color': c.get('color', '')
                                         }
+                                    # إضافة مسار الصورة من المعاملة
+                                    if c.get('image_path') and c.get('image_path') != 'stored_in_session':
+                                        final_car_data['image_path'] = c.get('image_path')
                                     st.session_state.car_data = final_car_data
                                     st.session_state.car_details = final_car_data  # مهم لصفحة الدفع
                                     st.session_state.estimated_price = c.get('total_amount', 0)
@@ -2028,7 +2034,8 @@ def home_page():
                                         'manufacture_year': trans.get('manufacture_year'),
                                         'mileage': trans.get('mileage'),
                                         'car_type': trans.get('car_type'),
-                                        'estimated_price': trans.get('estimated_price')
+                                        'estimated_price': trans.get('estimated_price'),
+                                        'image_path': trans.get('image_path', '')
                                     }
                                     st.session_state.estimated_price = trans.get('estimated_price', 0)
                                     st.session_state.page = 'checkout'

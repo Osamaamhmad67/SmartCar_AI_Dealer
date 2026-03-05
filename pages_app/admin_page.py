@@ -724,6 +724,9 @@ def admin_page():
                             # زر طباعة العقد - الانتقال إلى Checkout
                             if st.button(f"🖨️ {t('admin.print_contract')}", key=f"adm_contract_{c['id']}", use_container_width=True, type="primary"):
                                 st.session_state.selected_transaction = c
+                                # إضافة مسار الصورة
+                                if c.get('image_path') and c.get('image_path') != 'stored_in_session':
+                                    car_info['image_path'] = c.get('image_path')
                                 st.session_state.car_data = car_info
                                 st.session_state.estimated_price = c.get('total_amount', 0)
                                 st.session_state.last_transaction_id = c['id']
@@ -735,6 +738,9 @@ def admin_page():
                             # زر طباعة الفواتير - الانتقال إلى Checkout
                             if st.button(f"📄 {t('admin.print_invoices')}", key=f"adm_invoices_{c['id']}", use_container_width=True):
                                 st.session_state.selected_transaction = c
+                                # إضافة مسار الصورة
+                                if c.get('image_path') and c.get('image_path') != 'stored_in_session':
+                                    car_info['image_path'] = c.get('image_path')
                                 st.session_state.car_data = car_info
                                 st.session_state.estimated_price = c.get('total_amount', 0)
                                 st.session_state.last_transaction_id = c['id']
