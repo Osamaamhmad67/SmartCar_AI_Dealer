@@ -377,6 +377,11 @@ class InvoiceGenerator:
             'warranty': {'en': 'Warranty', 'de': 'Garantie', 'ar': 'الضمان'},
             'service_book': {'en': 'Service Book', 'de': 'Serviceheft', 'ar': 'دفتر الصيانة'},
             'equipment': {'en': 'Equipment', 'de': 'Ausstattung', 'ar': 'التجهيزات'},
+            # Vehicle extra fields
+            'seats': {'en': 'Seats', 'de': 'Sitze', 'ar': 'عدد المقاعد'},
+            'previous_owners': {'en': 'Previous Owners', 'de': 'Vorbesitzer', 'ar': 'المالكين السابقين'},
+            'tuv_remaining': {'en': 'TÜV Remaining', 'de': 'TÜV verbleibend', 'ar': 'المدة المتبقية للفحص'},
+            'maintenance': {'en': 'Regular Maintenance', 'de': 'Regelmäßige Wartung', 'ar': 'الصيانة الدورية'},
         }
         
         def L(key):
@@ -549,6 +554,10 @@ class InvoiceGenerator:
             (L('accident_history'), contract_data.get('accident_history', '')),
             (L('warranty'), contract_data.get('warranty', '')),
             (L('service_book'), contract_data.get('service_book', '')),
+            (L('seats'), str(contract_data.get('seats', '')) if contract_data.get('seats') else ''),
+            (L('previous_owners'), str(contract_data.get('previous_owners', '')) if contract_data.get('previous_owners') else ''),
+            (L('tuv_remaining'), f"{contract_data.get('tuv_months', '')} Mon." if contract_data.get('tuv_months') else ''),
+            (L('maintenance'), {'en': 'Yes', 'de': 'Ja', 'ar': 'نعم'}.get(lang, 'Yes') if contract_data.get('maintenance_history') in [True, 'True', 'true'] else ({'en': 'No', 'de': 'Nein', 'ar': 'لا'}.get(lang, 'No') if contract_data.get('maintenance_history') in [False, 'False', 'false'] else str(contract_data.get('maintenance_history', '')))),
         ]
         for label, value in optional_vehicle:
             if value:
