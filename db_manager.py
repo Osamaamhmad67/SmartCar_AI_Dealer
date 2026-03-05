@@ -418,12 +418,28 @@ class DatabaseManager:
 
     def create_transaction(self, user_id: int, car_data: Dict, estimated_price: float, condition_analysis: Dict, car_image_bytes: bytes = None, employee_id: int = None) -> int:
         """إنشاء سجل معاملة جديد وحفظ البيانات مع ربط الموظف للعمولة"""
-        import base64
         
-        # تحويل الصورة إلى base64 إذا وجدت
+        # حفظ الصورة كملف فعلي في data/images/
         image_path = None
         if car_image_bytes:
-            image_path = "stored_in_session" 
+            try:
+                images_dir = Config.IMAGES_DIR
+                images_dir.mkdir(parents=True, exist_ok=True)
+                
+                # إنشاء اسم ملف فريد
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                brand = car_data.get('brand', 'car').replace(' ', '_')
+                model = car_data.get('model', '').replace(' ', '_')
+                filename = f"{brand}_{model}_{timestamp}.jpg"
+                
+                file_path = images_dir / filename
+                with open(file_path, 'wb') as img_file:
+                    img_file.write(car_image_bytes)
+                
+                image_path = str(file_path)
+            except Exception as e:
+                self.logger.error(f"Failed to save car image: {e}")
+                image_path = None
 
         # جلب نسبة الربح الحالية لحفظها مع المعاملة
         current_profit_margin = self.get_setting('company_profit_margin', 0.20)

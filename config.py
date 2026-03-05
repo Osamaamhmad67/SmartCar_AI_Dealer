@@ -27,6 +27,7 @@ class Config:
     INVOICES_DIR = BASE_DIR / "invoices"
     LOGS_DIR = BASE_DIR / "logs"
     UPLOADS_DIR = BASE_DIR / "uploads"
+    IMAGES_DIR = DATA_DIR / "images"
     
     # ===== 2. إعدادات الهوية والأمان =====
     APP_NAME = os.getenv("APP_NAME", "SmartCar AI-Dealer")
@@ -326,7 +327,7 @@ class Config:
     def create_directories(cls):
         """إنشاء مجلدات النظام آلياً لضمان عدم حدوث خطأ FileNotFoundError"""
         dirs = [cls.CACHE_DIR, cls.BACKUPS_DIR, cls.DATA_DIR, cls.FONTS_DIR, 
-                cls.INVOICES_DIR, cls.LOGS_DIR, cls.UPLOADS_DIR]
+                cls.INVOICES_DIR, cls.LOGS_DIR, cls.UPLOADS_DIR, cls.IMAGES_DIR]
         for d in dirs:
             d.mkdir(parents=True, exist_ok=True)
 
