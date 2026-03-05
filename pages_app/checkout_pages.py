@@ -1133,6 +1133,29 @@ EUR{amount_to_pay:.2f}
                                  contract_payment_method = "Cash / كاش"
                                  contract_monthly = 0
                              
+                             # جلب مسار الصورة من قاعدة البيانات
+                             _db_img = DatabaseManager()
+                             _tx_id = st.session_state.get('last_transaction_id') or st.session_state.get('current_contract_id')
+                             _img_path = ''
+                             if _tx_id:
+                                 try:
+                                     import sqlite3
+                                     _conn = sqlite3.connect(str(_db_img.db_path))
+                                     _conn.row_factory = sqlite3.Row
+                                     _cur = _conn.cursor()
+                                     _cur.execute('SELECT image_path FROM transactions WHERE id = ?', (_tx_id,))
+                                     _row = _cur.fetchone()
+                                     if _row and _row['image_path'] and _row['image_path'] != 'stored_in_session':
+                                         _img_path = _row['image_path']
+                                     _conn.close()
+                                 except:
+                                     pass
+                             # Fallback: from car_data or session state
+                             if not _img_path:
+                                 _img_path = car_data.get('image_path', '') if isinstance(car_data, dict) else ''
+                             if not _img_path or _img_path == 'stored_in_session':
+                                 _img_path = st.session_state.get('car_image_path', '')
+
                              dummy_contract = {
                                  'id': 'DRAFT',
                                  'created_at': datetime.now(),
@@ -1143,6 +1166,8 @@ EUR{amount_to_pay:.2f}
                                  'payment_method': contract_payment_method,
                                  # بيانات السيارة مباشرة
                                  **(car_data if isinstance(car_data, dict) else {}),
+                                 # صورة السيارة
+                                 'image_path': _img_path,
                                  # البيانات المالية
                                  'down_payment': contract_down_payment,
                                  'remaining_amount': estimated_price - contract_down_payment,
