@@ -204,10 +204,23 @@ class InvoiceGenerator:
         pdf.cell(0, 10, "Vehicle Details / Fahrzeugdetails:", ln=True, fill=True)
         pdf.set_font(font_name, '', 11)
         
-        # صورة السيارة بشكل احترافي
+        # صورة السيارة بشكل احترافي - مع عدة مصادر احتياطية
         img_path = transaction_data.get('image_path', '')
         if (not img_path or img_path == 'stored_in_session') and hasattr(st, 'session_state'):
             img_path = st.session_state.get('car_image_path', '')
+        # Fallback: save uploaded_image bytes to temp file
+        if (not img_path or img_path == 'stored_in_session' or not os.path.exists(str(img_path))) and hasattr(st, 'session_state'):
+            uploaded_bytes = st.session_state.get('uploaded_image')
+            if uploaded_bytes and isinstance(uploaded_bytes, bytes):
+                try:
+                    tmp_dir = Config.IMAGES_DIR
+                    tmp_dir.mkdir(parents=True, exist_ok=True)
+                    tmp_path = tmp_dir / f"temp_invoice_{id(uploaded_bytes)}.jpg"
+                    with open(tmp_path, 'wb') as f:
+                        f.write(uploaded_bytes)
+                    img_path = str(tmp_path)
+                except:
+                    pass
         if img_path and img_path != 'stored_in_session' and os.path.exists(str(img_path)):
             try:
                 img_w = 80
@@ -449,11 +462,27 @@ class InvoiceGenerator:
         pdf.set_font(font_name, '', 11)
         pdf.ln(3)
         
-        # صورة السيارة بشكل احترافي
+        # صورة السيارة بشكل احترافي - مع عدة مصادر احتياطية
         image_path = contract_data.get('image_path', '')
-        # Try session state image path as fallback
+        
+        # Fallback 1: session state car_image_path
         if (not image_path or image_path == 'stored_in_session') and hasattr(st, 'session_state'):
             image_path = st.session_state.get('car_image_path', '')
+        
+        # Fallback 2: save uploaded_image bytes to temp file
+        if (not image_path or image_path == 'stored_in_session' or not os.path.exists(str(image_path))) and hasattr(st, 'session_state'):
+            uploaded_bytes = st.session_state.get('uploaded_image')
+            if uploaded_bytes and isinstance(uploaded_bytes, bytes):
+                try:
+                    import tempfile
+                    tmp_dir = Config.IMAGES_DIR
+                    tmp_dir.mkdir(parents=True, exist_ok=True)
+                    tmp_path = tmp_dir / f"temp_contract_{id(uploaded_bytes)}.jpg"
+                    with open(tmp_path, 'wb') as f:
+                        f.write(uploaded_bytes)
+                    image_path = str(tmp_path)
+                except Exception as e:
+                    print(f"Temp image save error: {e}")
         
         if image_path and image_path != 'stored_in_session' and os.path.exists(str(image_path)):
             try:
