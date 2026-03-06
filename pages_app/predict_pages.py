@@ -642,17 +642,27 @@ def predict_page():
             # الصف السابع - التجهيزات الإضافية
             with equip_container:
                 st.markdown(f"**{t('admin.equipment')}**")
-                eq_cols = st.columns(5)
+                eq_cols = st.columns(7)
                 equipment_items = []
                 equip_keys = [
                     ('leather', 'admin.equip_leather'), ('navigation', 'admin.equip_navigation'),
                     ('sunroof', 'admin.equip_sunroof'), ('panoramic_roof', 'admin.equip_panoramic'),
-                    ('heated_seats', 'admin.equip_heated_seats'), ('parking_sensors', 'admin.equip_parking_sensors'),
-                    ('parking_camera', 'admin.equip_parking_camera'), ('led_headlights', 'admin.equip_led'),
-                    ('adaptive_cruise', 'admin.equip_cruise'), ('apple_carplay', 'admin.equip_carplay'),
-                    ('sport_package', 'admin.equip_sport'), ('keyless_entry', 'admin.equip_keyless'),
-                    ('ambient_lighting', 'admin.equip_ambient'), ('heads_up_display', 'admin.equip_hud'),
-                    ('camera_360', 'admin.equip_cam360'),
+                    ('heated_seats', 'admin.equip_heated_seats'), ('ventilated_seats', 'admin.equip_ventilated_seats'),
+                    ('parking_sensors', 'admin.equip_parking_sensors'), ('parking_camera', 'admin.equip_parking_camera'),
+                    ('camera_360', 'admin.equip_cam360'), ('led_headlights', 'admin.equip_led'),
+                    ('xenon_headlights', 'admin.equip_xenon'), ('matrix_led', 'admin.equip_matrix_led'),
+                    ('adaptive_cruise', 'admin.equip_cruise'), ('lane_assist', 'admin.equip_lane_assist'),
+                    ('blind_spot', 'admin.equip_blind_spot'), ('auto_parking', 'admin.equip_auto_parking'),
+                    ('auto_climate', 'admin.equip_auto_climate'), ('dual_climate', 'admin.equip_dual_climate'),
+                    ('sport_package', 'admin.equip_sport'), ('amg_package', 'admin.equip_amg'),
+                    ('m_package', 'admin.equip_m_package'), ('s_line', 'admin.equip_s_line'),
+                    ('apple_carplay', 'admin.equip_carplay'), ('android_auto', 'admin.equip_android_auto'),
+                    ('wireless_charging', 'admin.equip_wireless_charging'), ('heads_up_display', 'admin.equip_hud'),
+                    ('keyless_entry', 'admin.equip_keyless'), ('ambient_lighting', 'admin.equip_ambient'),
+                    ('harman_kardon', 'admin.equip_harman_kardon'), ('bose_sound', 'admin.equip_bose'),
+                    ('burmester_sound', 'admin.equip_burmester'), ('tow_hook', 'admin.equip_tow_hook'),
+                    ('roof_rack', 'admin.equip_roof_rack'), ('winter_tires', 'admin.equip_winter_tires'),
+                    ('spare_key', 'admin.equip_spare_key'),
                 ]
                 for idx, (key, label_key) in enumerate(equip_keys):
                     with eq_cols[idx % 5]:
@@ -752,17 +762,27 @@ def predict_page():
             # الصف السابع - التجهيزات (يدوي)
             with equip_container:
                 st.markdown(f"**{t('admin.equipment')}**")
-                eq_cols = st.columns(5)
+                eq_cols = st.columns(7)
                 equipment_items = []
                 equip_keys = [
                     ('leather', 'admin.equip_leather'), ('navigation', 'admin.equip_navigation'),
                     ('sunroof', 'admin.equip_sunroof'), ('panoramic_roof', 'admin.equip_panoramic'),
-                    ('heated_seats', 'admin.equip_heated_seats'), ('parking_sensors', 'admin.equip_parking_sensors'),
-                    ('parking_camera', 'admin.equip_parking_camera'), ('led_headlights', 'admin.equip_led'),
-                    ('adaptive_cruise', 'admin.equip_cruise'), ('apple_carplay', 'admin.equip_carplay'),
-                    ('sport_package', 'admin.equip_sport'), ('keyless_entry', 'admin.equip_keyless'),
-                    ('ambient_lighting', 'admin.equip_ambient'), ('heads_up_display', 'admin.equip_hud'),
-                    ('camera_360', 'admin.equip_cam360'),
+                    ('heated_seats', 'admin.equip_heated_seats'), ('ventilated_seats', 'admin.equip_ventilated_seats'),
+                    ('parking_sensors', 'admin.equip_parking_sensors'), ('parking_camera', 'admin.equip_parking_camera'),
+                    ('camera_360', 'admin.equip_cam360'), ('led_headlights', 'admin.equip_led'),
+                    ('xenon_headlights', 'admin.equip_xenon'), ('matrix_led', 'admin.equip_matrix_led'),
+                    ('adaptive_cruise', 'admin.equip_cruise'), ('lane_assist', 'admin.equip_lane_assist'),
+                    ('blind_spot', 'admin.equip_blind_spot'), ('auto_parking', 'admin.equip_auto_parking'),
+                    ('auto_climate', 'admin.equip_auto_climate'), ('dual_climate', 'admin.equip_dual_climate'),
+                    ('sport_package', 'admin.equip_sport'), ('amg_package', 'admin.equip_amg'),
+                    ('m_package', 'admin.equip_m_package'), ('s_line', 'admin.equip_s_line'),
+                    ('apple_carplay', 'admin.equip_carplay'), ('android_auto', 'admin.equip_android_auto'),
+                    ('wireless_charging', 'admin.equip_wireless_charging'), ('heads_up_display', 'admin.equip_hud'),
+                    ('keyless_entry', 'admin.equip_keyless'), ('ambient_lighting', 'admin.equip_ambient'),
+                    ('harman_kardon', 'admin.equip_harman_kardon'), ('bose_sound', 'admin.equip_bose'),
+                    ('burmester_sound', 'admin.equip_burmester'), ('tow_hook', 'admin.equip_tow_hook'),
+                    ('roof_rack', 'admin.equip_roof_rack'), ('winter_tires', 'admin.equip_winter_tires'),
+                    ('spare_key', 'admin.equip_spare_key'),
                 ]
                 for idx, (key, label_key) in enumerate(equip_keys):
                     with eq_cols[idx % 5]:
