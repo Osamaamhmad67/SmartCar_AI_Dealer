@@ -338,6 +338,22 @@ class DatabaseManager:
                 FOREIGN KEY (employee_id) REFERENCES employees(id)
             )''')
 
+            # 9. جدول متابعة العملاء (CRM - Customer Follow-ups)
+            cursor.execute('''CREATE TABLE IF NOT EXISTS customer_followups (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_name TEXT NOT NULL,
+                phone TEXT,
+                email TEXT,
+                car_interest TEXT,
+                status TEXT DEFAULT 'new',
+                notes TEXT,
+                next_followup_date DATE,
+                assigned_employee_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (assigned_employee_id) REFERENCES employees(id)
+            )''')
+
     # ===== 1. إدارة المستخدمين والأمان =====
     
     def get_user_by_username(self, username: str) -> Optional[Dict]:
@@ -1933,3 +1949,81 @@ class DatabaseManager:
         """حساب العمولة بناءً على المبيعات"""
         return sales_total * rate
 
+    # ===== CRM - إدارة متابعة العملاء =====
+
+    def create_followup(self, customer_name: str, phone: str = None, email: str = None,
+                        car_interest: str = None, status: str = 'new', notes: str = None,
+                        next_followup_date: str = None, assigned_employee_id: int = None) -> int:
+        """إنشاء سجل متابعة عميل جديد"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO customer_followups 
+                (customer_name, phone, email, car_interest, status, notes, next_followup_date, assigned_employee_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (customer_name, phone, email, car_interest, status, notes, next_followup_date, assigned_employee_id))
+            return cursor.lastrowid
+
+    def get_all_followups(self, status_filter: str = None) -> List[Dict]:
+        """جلب جميع سجلات المتابعة مع إمكانية الفلترة حسب الحالة"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            if status_filter:
+                cursor.execute('''
+                    SELECT f.*, e.first_name || ' ' || COALESCE(e.last_name, '') as employee_name
+                    FROM customer_followups f
+                    LEFT JOIN employees e ON f.assigned_employee_id = e.id
+                    WHERE f.status = ?
+                    ORDER BY f.next_followup_date ASC, f.created_at DESC
+                ''', (status_filter,))
+            else:
+                cursor.execute('''
+                    SELECT f.*, e.first_name || ' ' || COALESCE(e.last_name, '') as employee_name
+                    FROM customer_followups f
+                    LEFT JOIN employees e ON f.assigned_employee_id = e.id
+                    ORDER BY f.next_followup_date ASC, f.created_at DESC
+                ''')
+            return [dict(row) for row in cursor.fetchall()]
+
+    def update_followup(self, followup_id: int, **kwargs) -> bool:
+        """تحديث سجل متابعة"""
+        allowed = {'customer_name', 'phone', 'email', 'car_interest', 'status', 'notes', 'next_followup_date', 'assigned_employee_id'}
+        updates = []
+        params = []
+        for k, v in kwargs.items():
+            if k in allowed:
+                updates.append(f"{k} = ?")
+                params.append(v)
+        if not updates:
+            return False
+        updates.append("updated_at = CURRENT_TIMESTAMP")
+        query = f"UPDATE customer_followups SET {', '.join(updates)} WHERE id = ?"
+        params.append(followup_id)
+        try:
+            with self.get_connection() as conn:
+                conn.execute(query, params)
+            return True
+        except Exception:
+            return False
+
+    def delete_followup(self, followup_id: int) -> bool:
+        """حذف سجل متابعة"""
+        try:
+            with self.get_connection() as conn:
+                conn.execute("DELETE FROM customer_followups WHERE id = ?", (followup_id,))
+            return True
+        except Exception:
+            return False
+
+    def get_due_followups(self) -> List[Dict]:
+        """جلب المتابعات المستحقة اليوم أو المتأخرة"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT f.*, e.first_name || ' ' || COALESCE(e.last_name, '') as employee_name
+                FROM customer_followups f
+                LEFT JOIN employees e ON f.assigned_employee_id = e.id
+                WHERE f.next_followup_date <= date('now') AND f.status NOT IN ('closed', 'lost')
+                ORDER BY f.next_followup_date ASC
+            ''')
+            return [dict(row) for row in cursor.fetchall()]

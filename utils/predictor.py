@@ -12,9 +12,9 @@ class PricePredictor:
 
     def __init__(self):
         # الأوزان المرجحة الأساسية (Weighted Pricing Model)
-        self.w_condition = 0.50  # وزن الحالة الفنية
-        self.w_mileage = 0.35   # وزن الممشى
-        self.w_age = 0.15       # وزن العمر الزمني
+        self.w_condition = 0.40  # وزن الحالة الفنية
+        self.w_mileage = 0.30   # وزن الممشى
+        self.w_age = 0.30       # وزن العمر الزمني (زيادة التأثير)
         self.current_year = 2026
 
     def predict_price(self, analysis_data: dict) -> float:
@@ -138,10 +138,9 @@ class PricePredictor:
         equipment_bonus = Config.calculate_equipment_bonus(equipment) if equipment else 1.0
 
         # ======= المرحلة 5: المعادلة النهائية =======
-        final_price = (
-            base_price
-            * weighted_core
-            * brand_factor
+        # حساب المعامل الإجمالي للعوامل الإضافية مع تخميد لمنع التكديس الزائد
+        additional_factors = (
+            brand_factor
             * fuel_factor
             * transmission_factor
             * drivetrain_factor
@@ -157,6 +156,18 @@ class PricePredictor:
             * service_book_factor
             * equipment_bonus
         )
+        
+        # تخميد: إذا تجاوز المعامل 1.0 نأخذ الجذر التربيعي للجزء الزائد
+        # هذا يمنع تكديس عوامل صغيرة (1.05 × 1.08 × 1.05...) من رفع السعر كثيراً
+        if additional_factors > 1.0:
+            dampened = 1.0 + (additional_factors - 1.0) ** 0.45
+        else:
+            dampened = additional_factors
+        
+        final_price = base_price * weighted_core * dampened
+
+        # حد أقصى معقول
+        final_price = min(final_price, 150000)
 
         return round(final_price, 2)
 

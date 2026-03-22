@@ -54,21 +54,21 @@ class Config:
     # ===== 5. محرك التسعير المتقدم ودعم اللغات (Advanced Pricing Engine) =====
     # مفاتيح ثابتة (Internal Keys) لضمان استقرار الحسابات المالية
     BASE_PRICES = {
-        "sedan": int(os.getenv("BASE_PRICE_SEDAN", "35000")),
-        "suv": int(os.getenv("BASE_PRICE_SUV", "45000")),
-        "coupe": int(os.getenv("BASE_PRICE_COUPE", "40000")),
-        "hybrid": int(os.getenv("BASE_PRICE_HYBRID", "50000")),
-        "electric": int(os.getenv("BASE_PRICE_ELECTRIC", "55000")),
-        "pickup": int(os.getenv("BASE_PRICE_PICKUP", "42000")),
+        "sedan": int(os.getenv("BASE_PRICE_SEDAN", "18000")),
+        "suv": int(os.getenv("BASE_PRICE_SUV", "22000")),
+        "coupe": int(os.getenv("BASE_PRICE_COUPE", "20000")),
+        "hybrid": int(os.getenv("BASE_PRICE_HYBRID", "24000")),
+        "electric": int(os.getenv("BASE_PRICE_ELECTRIC", "28000")),
+        "pickup": int(os.getenv("BASE_PRICE_PICKUP", "20000")),
         # أنواع هيكل جديدة
-        "hatchback": int(os.getenv("BASE_PRICE_HATCHBACK", "28000")),
-        "wagon": int(os.getenv("BASE_PRICE_WAGON", "37000")),
-        "convertible": int(os.getenv("BASE_PRICE_CONVERTIBLE", "48000")),
-        "van": int(os.getenv("BASE_PRICE_VAN", "38000")),
-        "minivan": int(os.getenv("BASE_PRICE_MINIVAN", "35000")),
-        "crossover": int(os.getenv("BASE_PRICE_CROSSOVER", "40000")),
-        "limousine": int(os.getenv("BASE_PRICE_LIMOUSINE", "65000")),
-        "sports": int(os.getenv("BASE_PRICE_SPORTS", "55000")),
+        "hatchback": int(os.getenv("BASE_PRICE_HATCHBACK", "12000")),
+        "wagon": int(os.getenv("BASE_PRICE_WAGON", "16000")),
+        "convertible": int(os.getenv("BASE_PRICE_CONVERTIBLE", "22000")),
+        "van": int(os.getenv("BASE_PRICE_VAN", "18000")),
+        "minivan": int(os.getenv("BASE_PRICE_MINIVAN", "15000")),
+        "crossover": int(os.getenv("BASE_PRICE_CROSSOVER", "19000")),
+        "limousine": int(os.getenv("BASE_PRICE_LIMOUSINE", "35000")),
+        "sports": int(os.getenv("BASE_PRICE_SPORTS", "30000")),
     }
     
     # خريطة لربط المسميات بلغات مختلفة بالمفاتيح الثابتة أعلاه
@@ -94,37 +94,37 @@ class Config:
         "schrägheck": "hatchback", "fließheck": "hatchback",
     }
 
-    # ===== 5.1 معاملات الماركات (35+ ماركة) =====
+    # ===== 5.1 معاملات الماركات - مُحسَّنة لسوق السيارات المستعملة =====
     BRAND_FACTORS = {
-        # Premium German
-        "porsche": 1.40, "mercedes": 1.30, "mercedes-benz": 1.30,
-        "bmw": 1.25, "audi": 1.22,
+        # Premium German (خفض للسوق المستعمل)
+        "porsche": 1.25, "mercedes": 1.18, "mercedes-benz": 1.18,
+        "bmw": 1.15, "audi": 1.12,
         # Mainstream German
-        "volkswagen": 1.12, "vw": 1.12, "opel": 1.00, "smart": 0.95,
+        "volkswagen": 1.06, "vw": 1.06, "opel": 0.95, "smart": 0.88,
         # Japanese
-        "toyota": 1.15, "lexus": 1.22, "honda": 1.10, "acura": 1.12,
-        "mazda": 1.08, "nissan": 1.05, "infiniti": 1.10,
-        "subaru": 1.08, "mitsubishi": 1.02, "suzuki": 1.00,
+        "toyota": 1.08, "lexus": 1.15, "honda": 1.05, "acura": 1.08,
+        "mazda": 1.03, "nissan": 1.00, "infiniti": 1.05,
+        "subaru": 1.03, "mitsubishi": 0.98, "suzuki": 0.95,
         # Korean
-        "hyundai": 1.08, "kia": 1.06, "genesis": 1.18,
+        "hyundai": 1.02, "kia": 1.00, "genesis": 1.10,
         # American
-        "tesla": 1.30, "ford": 1.05, "chevrolet": 1.02,
-        "jeep": 1.08, "dodge": 1.02, "cadillac": 1.15,
-        "lincoln": 1.12, "chrysler": 1.00, "gmc": 1.08, "ram": 1.05,
+        "tesla": 1.15, "ford": 0.98, "chevrolet": 0.95,
+        "jeep": 1.03, "dodge": 0.95, "cadillac": 1.08,
+        "lincoln": 1.05, "chrysler": 0.92, "gmc": 1.02, "ram": 1.00,
         # European
-        "volvo": 1.15, "skoda": 1.06, "seat": 1.02, "cupra": 1.08,
-        "renault": 1.00, "peugeot": 1.00, "citroen": 0.98, "ds": 1.05,
-        "fiat": 0.95, "dacia": 0.88, "alfa romeo": 1.05, "lancia": 0.95,
-        "mini": 1.08,
+        "volvo": 1.08, "skoda": 1.00, "seat": 0.95, "cupra": 1.03,
+        "renault": 0.95, "peugeot": 0.95, "citroen": 0.92, "ds": 1.00,
+        "fiat": 0.88, "dacia": 0.82, "alfa romeo": 0.98, "lancia": 0.88,
+        "mini": 1.03,
         # Luxury / Supercar
-        "land rover": 1.25, "range rover": 1.30, "jaguar": 1.15,
-        "maserati": 1.20, "bentley": 1.50, "rolls royce": 1.60,
-        "rolls-royce": 1.60, "lamborghini": 1.55, "ferrari": 1.60,
-        "aston martin": 1.45, "mclaren": 1.50, "bugatti": 1.70,
-        "maybach": 1.55, "lotus": 1.35,
+        "land rover": 1.15, "range rover": 1.18, "jaguar": 1.08,
+        "maserati": 1.12, "bentley": 1.35, "rolls royce": 1.45,
+        "rolls-royce": 1.45, "lamborghini": 1.40, "ferrari": 1.45,
+        "aston martin": 1.30, "mclaren": 1.35, "bugatti": 1.50,
+        "maybach": 1.40, "lotus": 1.20,
         # Chinese (growing in German market)
-        "byd": 1.00, "nio": 1.02, "mg": 0.95, "xpeng": 0.98,
-        "polestar": 1.10, "lynk & co": 0.98, "ora": 0.92,
+        "byd": 0.95, "nio": 0.98, "mg": 0.90, "xpeng": 0.92,
+        "polestar": 1.05, "lynk & co": 0.92, "ora": 0.88,
         # Default
         "other": 1.00,
     }

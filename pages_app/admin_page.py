@@ -8,6 +8,7 @@ import streamlit.components.v1 as components
 import os
 import base64
 import json
+import sqlite3
 from datetime import datetime, timedelta
 from io import BytesIO
 from utils.i18n import t, get_current_lang, is_rtl, rtl_tabs
@@ -38,7 +39,7 @@ def admin_page():
     # القائمة الجانبية
     admin_menu = st.selectbox(
         t('admin.title'),
-        [t('admin.statistics'), '📊 مبيعات الموظفين', t('admin.users'), t('admin.employees'), t('admin.transactions'), t('admin.financial_settings'), f"📋 {t('admin.audit_log', 'Audit Log')}", f"📈 {t('admin.kpi', 'KPI Dashboard')}", f"📊 {t('admin.monthly_report', 'Monthly Report')}"]
+        [t('admin.statistics'), '📊 مبيعات الموظفين', t('admin.users'), t('admin.employees'), t('admin.transactions'), t('admin.financial_settings'), f"📋 {t('admin.audit_log', 'Audit Log')}", f"📈 {t('admin.kpi', 'KPI Dashboard')}", f"📊 {t('admin.monthly_report', 'Monthly Report')}", f"💰 {t('admin.profit_reports', 'Profit Reports')}", f"🏷️ {t('admin.offers_mgmt', 'Offers & Discounts')}"]
     )
     
     db = DatabaseManager()
@@ -1578,6 +1579,193 @@ def admin_page():
             from utils.whatsapp_sender import WhatsAppSender
             wa_link = WhatsAppSender.generate_link("", f"SmartCar Report {report_month}/{report_year}")
             st.markdown(f"[📱 Share via WhatsApp]({wa_link})")
+
+    elif admin_menu == f"💰 {t('admin.profit_reports', 'Profit Reports')}":
+        st.subheader(f"💰 {t('admin.profit_reports', 'Profit Reports')}")
+        
+        from utils.profit_analyzer import ProfitAnalyzer
+        import plotly.express as px
+        import plotly.graph_objects as go
+        import pandas as pd
+        
+        summary = ProfitAnalyzer.get_profit_summary()
+        
+        # Summary KPI Cards
+        pc1, pc2, pc3, pc4 = st.columns(4)
+        profit_cards = [
+            (pc1, '💰', t('profit.total_profit', 'Total Profit'), f"€{summary['total_profit']:,.0f}", '#27ae60'),
+            (pc2, '📊', t('profit.avg_margin', 'Avg Margin'), f"{summary['avg_margin']:.1f}%", '#3498db'),
+            (pc3, '🏆', t('profit.best_month', 'Best Month'), summary['best_month'], '#D4AF37'),
+            (pc4, '🏎️', t('profit.best_brand', 'Best Brand'), summary['best_brand'], '#9b59b6'),
+        ]
+        for col, icon, label, value, color in profit_cards:
+            with col:
+                st.markdown(f"""
+                <div style="background: #16213e; padding: 18px; border-radius: 12px; text-align: center; border-top: 3px solid {color};">
+                    <div style="font-size: 1.6em;">{icon}</div>
+                    <div style="color: {color}; font-size: 1.5em; font-weight: bold;">{value}</div>
+                    <div style="color: #a0a0c0; font-size: 0.85em;">{label}</div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Monthly Revenue vs Profit Trend
+        st.subheader(f"📈 {t('profit.monthly_trend', 'Monthly Revenue vs Profit')}")
+        monthly_data = ProfitAnalyzer.get_monthly_profit_chart_data()
+        if monthly_data:
+            df_m = pd.DataFrame(monthly_data)
+            fig_trend = go.Figure()
+            fig_trend.add_trace(go.Bar(x=df_m['month'], y=df_m['revenue'], name=t('profit.revenue', 'Revenue'), marker_color='#3498db'))
+            fig_trend.add_trace(go.Bar(x=df_m['month'], y=df_m['profit'], name=t('profit.profit', 'Profit'), marker_color='#27ae60'))
+            fig_trend.add_trace(go.Scatter(x=df_m['month'], y=df_m['cost'], name=t('profit.cost', 'Cost'), line=dict(color='#e74c3c', width=2, dash='dot'), mode='lines+markers'))
+            fig_trend.update_layout(template='plotly_dark', barmode='group', title=t('profit.monthly_breakdown', 'Monthly Revenue / Profit / Cost'))
+            st.plotly_chart(fig_trend, use_container_width=True)
+        else:
+            st.info(t('profit.no_data', 'No profit data available'))
+        
+        st.markdown("---")
+        
+        pr_col1, pr_col2 = st.columns(2)
+        
+        with pr_col1:
+            # Brand Profit Ranking
+            st.subheader(f"🏆 {t('profit.brand_ranking', 'Brand Profit Ranking')}")
+            brand_data = ProfitAnalyzer.get_brand_profit_ranking()
+            if brand_data:
+                df_b = pd.DataFrame(brand_data)
+                fig_brand = px.bar(df_b, x='profit', y='brand', orientation='h',
+                    color='avg_margin', color_continuous_scale='Viridis',
+                    labels={'profit': t('profit.profit', 'Profit (€)'), 'brand': t('profit.brand', 'Brand'), 'avg_margin': t('profit.margin', 'Margin %')},
+                    title=t('profit.by_brand', 'Profit by Brand'))
+                fig_brand.update_layout(template='plotly_dark', yaxis={'categoryorder': 'total ascending'})
+                st.plotly_chart(fig_brand, use_container_width=True)
+            else:
+                st.info(t('profit.no_data', 'No data'))
+        
+        with pr_col2:
+            # Top Profitable Cars
+            st.subheader(f"🥇 {t('profit.top_cars', 'Top Profitable Cars')}")
+            top_cars = ProfitAnalyzer.get_top_profitable_cars(10)
+            if top_cars:
+                for i, car in enumerate(top_cars, 1):
+                    medal = '🥇' if i == 1 else '🥈' if i == 2 else '🥉' if i == 3 else f'#{i}'
+                    st.markdown(f"""
+                    <div style="background: #16213e; padding: 8px 12px; border-radius: 8px; margin: 4px 0; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: white;">{medal} {car['brand']} {car['model']} ({car['year'] or '-'})</span>
+                        <span style="color: #27ae60; font-weight: bold;">+€{car['profit']:,.0f} <span style="color:#a0a0c0; font-size:0.8em;">({car['margin']:.0f}%)</span></span>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info(t('profit.no_data', 'No data'))
+    
+    elif admin_menu == f"🏷️ {t('admin.offers_mgmt', 'Offers & Discounts')}":
+        st.subheader(f"🏷️ {t('admin.offers_mgmt', 'Offers & Discounts')}")
+        
+        from utils.offers_system import OffersSystem
+        
+        offers = OffersSystem.get_all_offers()
+        
+        # Stats cards
+        active_count = sum(1 for o in offers if o.get('active'))
+        expired_count = sum(1 for o in offers if not o.get('active'))
+        total_uses = sum(o.get('current_uses', 0) for o in offers)
+        
+        oc1, oc2, oc3, oc4 = st.columns(4)
+        offer_cards = [
+            (oc1, '🏷️', t('offers.total', 'Total Offers'), len(offers), '#D4AF37'),
+            (oc2, '✅', t('offers.active', 'Active'), active_count, '#27ae60'),
+            (oc3, '❌', t('offers.expired', 'Expired'), expired_count, '#e74c3c'),
+            (oc4, '📊', t('offers.total_uses', 'Total Uses'), total_uses, '#3498db'),
+        ]
+        for col, icon, label, value, color in offer_cards:
+            with col:
+                st.markdown(f"""
+                <div style="background: #16213e; padding: 15px; border-radius: 12px; text-align: center; border-top: 3px solid {color};">
+                    <div style="font-size: 1.4em;">{icon}</div>
+                    <div style="color: {color}; font-size: 1.5em; font-weight: bold;">{value}</div>
+                    <div style="color: #a0a0c0; font-size: 0.85em;">{label}</div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Create New Offer
+        with st.expander(f"➕ {t('offers.create_new', 'Create New Offer')}", expanded=False):
+            with st.form("new_offer_form"):
+                of_col1, of_col2 = st.columns(2)
+                with of_col1:
+                    of_desc = st.text_input(t('offers.description', 'Description'), placeholder="e.g. Summer Sale 2026")
+                    of_type = st.selectbox(t('offers.discount_type', 'Discount Type'), ['percentage', 'fixed'],
+                        format_func=lambda x: f"% {t('offers.percentage', 'Percentage')}" if x == 'percentage' else f"€ {t('offers.fixed', 'Fixed Amount')}")
+                with of_col2:
+                    of_value = st.number_input(t('offers.discount_value', 'Discount Value'), min_value=0.0, value=10.0, step=1.0)
+                    of_max = st.number_input(t('offers.max_uses', 'Max Uses'), min_value=1, value=10, step=1)
+                of_col3, of_col4 = st.columns(2)
+                with of_col3:
+                    of_code = st.text_input(t('offers.custom_code', 'Custom Code (optional)'), placeholder="SC-SUMMER26")
+                with of_col4:
+                    of_expiry = st.date_input(t('offers.expiry_date', 'Expiry Date'))
+                
+                if st.form_submit_button(f"✅ {t('offers.create', 'Create Offer')}", type="primary", use_container_width=True):
+                    if of_desc:
+                        code = OffersSystem.create_offer(
+                            description=of_desc, discount_type=of_type,
+                            discount_value=of_value, max_uses=of_max,
+                            valid_until=str(of_expiry) if of_expiry else None,
+                            code=of_code if of_code else None
+                        )
+                        st.success(f"✅ {t('offers.created', 'Offer created!')} Code: **{code}**")
+                        st.rerun()
+                    else:
+                        st.warning(t('offers.need_desc', 'Please enter a description'))
+        
+        st.markdown("---")
+        
+        # List all offers
+        st.subheader(f"📋 {t('offers.all_offers', 'All Offers')}")
+        if offers:
+            for offer in offers:
+                status_color = '#27ae60' if offer.get('active') else '#e74c3c'
+                status_label = '✅ Active' if offer.get('active') else '❌ Inactive'
+                disc_display = f"{offer['discount_value']}%" if offer.get('discount_type') == 'percentage' else f"€{offer['discount_value']:,.0f}"
+                uses_display = f"{offer.get('current_uses', 0)}/{offer.get('max_uses', 0)}"
+                expiry = offer.get('valid_until', '-') or '-'
+                
+                st.markdown(f"""
+                <div style="background: #16213e; padding: 12px 16px; border-radius: 10px; margin: 6px 0; border-left: 4px solid {status_color};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="background: {status_color}22; color: {status_color}; padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">{status_label}</span>
+                            <span style="color: #D4AF37; font-weight: bold; margin-left: 10px; font-size: 1.1em;">{offer['code']}</span>
+                            <span style="color: #a0a0c0; margin-left: 10px;">{offer.get('description', '')}</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="color: #4CAF50; font-weight: bold;">-{disc_display}</span>
+                            <span style="color: #a0a0c0; margin-left: 12px;">📊 {uses_display}</span>
+                            <span style="color: #a0a0c0; margin-left: 12px;">📅 {expiry}</span>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Action buttons
+                btn_c1, btn_c2 = st.columns([4, 1])
+                with btn_c2:
+                    if offer.get('active'):
+                        if st.button(f"🚫 {t('offers.deactivate', 'Deactivate')}", key=f"deact_offer_{offer['id']}"):
+                            conn = sqlite3.connect(Config.DATABASE_PATH)
+                            conn.execute("UPDATE offers SET active=0 WHERE id=?", (offer['id'],))
+                            conn.commit(); conn.close()
+                            st.rerun()
+                    else:
+                        if st.button(f"✅ {t('offers.activate', 'Activate')}", key=f"act_offer_{offer['id']}"):
+                            conn = sqlite3.connect(Config.DATABASE_PATH)
+                            conn.execute("UPDATE offers SET active=1 WHERE id=?", (offer['id'],))
+                            conn.commit(); conn.close()
+                            st.rerun()
+        else:
+            st.info(t('offers.no_offers', 'No offers yet. Create your first offer above!'))
 
 
 
