@@ -21,7 +21,9 @@
     "checkout": "Kasse",
     "help": "Hilfe",
     "features": "Funktionen",
-    "about": "Über die App"
+    "about": "Über die App",
+    "my_dashboard": "Mein Dashboard",
+    "crm": "CRM"
   },
   "login": {
     "title": "Anmelden",
@@ -1082,9 +1084,5 @@
     "deactivate": "Deaktivieren",
     "activate": "Aktivieren",
     "no_offers": "Noch keine Angebote. Erstellen Sie Ihr erstes Angebot!"
-  },
-  "nav": {
-    "my_dashboard": "Mein Dashboard",
-    "crm": "CRM"
   }
 }

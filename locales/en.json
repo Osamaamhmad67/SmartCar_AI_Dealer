@@ -21,7 +21,9 @@
     "checkout": "Checkout",
     "help": "Help",
     "features": "Features",
-    "about": "About"
+    "about": "About",
+    "my_dashboard": "My Dashboard",
+    "crm": "CRM"
   },
   "login": {
     "title": "Login",
@@ -1079,9 +1081,5 @@
     "deactivate": "Deactivate",
     "activate": "Activate",
     "no_offers": "No offers yet. Create your first offer above!"
-  },
-  "nav": {
-    "my_dashboard": "My Dashboard",
-    "crm": "CRM"
   }
 }
