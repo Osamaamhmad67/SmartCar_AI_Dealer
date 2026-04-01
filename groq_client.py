@@ -55,6 +55,19 @@ class CarAIClient(GroqBaseClient):
         8. color: (Visible exterior color)
         9. summary: (Brief professional assessment)
         10. brand_confidence: (Float 0.0-1.0 - how certain about brand?)
+        11. detected_equipment: (List of ONLY the equipment you can VISUALLY CONFIRM from the image. Use ONLY these exact keys:
+            "leather", "navigation", "sunroof", "panoramic_roof", "heated_seats", "ventilated_seats",
+            "parking_sensors", "parking_camera", "camera_360", "led_headlights", "xenon_headlights", "matrix_led",
+            "adaptive_cruise", "lane_assist", "blind_spot", "auto_parking",
+            "auto_climate", "dual_climate", "sport_package", "amg_package", "m_package", "s_line",
+            "apple_carplay", "android_auto", "wireless_charging", "heads_up_display",
+            "keyless_entry", "ambient_lighting", "harman_kardon", "bose_sound", "burmester_sound",
+            "tow_hook", "roof_rack", "winter_tires", "spare_key"
+            IMPORTANT: Only include items you can SEE evidence of in the photo. Look for:
+            - Badges/logos: AMG, M, S-Line, BOSE, Harman Kardon, Burmester
+            - Exterior: LED/Xenon lights, sunroof, panoramic roof, roof rack, tow hook, parking sensors
+            - Interior: leather seats, navigation screen, ambient lighting, dual climate controls
+            Return empty list [] if nothing is visible.)
 
         🚨 VALIDATION RULES 🚨
         - If logo_description mentions "wing" or "arrow" → brand MUST be "Skoda"
@@ -202,6 +215,17 @@ class CarAIClient(GroqBaseClient):
             21. estimated_price_range: {{"min": number, "max": number}} (In Euro, based on market value)
             22. confidence: (Float 0.0 to 1.0, how sure are you about the model?)
             23. success: true (Always true if analysis works)
+            24. detected_equipment: (List of equipment VISUALLY CONFIRMED from ALL images. Use ONLY these exact keys:
+                "leather", "navigation", "sunroof", "panoramic_roof", "heated_seats", "ventilated_seats",
+                "parking_sensors", "parking_camera", "camera_360", "led_headlights", "xenon_headlights", "matrix_led",
+                "adaptive_cruise", "lane_assist", "blind_spot", "auto_parking",
+                "auto_climate", "dual_climate", "sport_package", "amg_package", "m_package", "s_line",
+                "apple_carplay", "android_auto", "wireless_charging", "heads_up_display",
+                "keyless_entry", "ambient_lighting", "harman_kardon", "bose_sound", "burmester_sound",
+                "tow_hook", "roof_rack", "winter_tires", "spare_key"
+                LOOK FOR: badges (AMG/M/S-Line/BOSE/Burmester), LED headlights, sunroof, panoramic roof,
+                leather interior, navigation screen, ambient lighting, roof rack, tow hook, dual climate knobs,
+                parking sensors on bumper, keyless start button. Return [] if nothing confirmed.)
 
             Return ONLY valid JSON.
             """

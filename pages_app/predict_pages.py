@@ -403,6 +403,11 @@ def predict_page():
                             st.session_state.analysis_result = analysis_result
                             st.session_state.car_details['analysis'] = analysis_result
                             
+                            # حفظ التجهيزات المكتشفة بالـ AI
+                            ai_equip = analysis_result.get('detected_equipment', [])
+                            if isinstance(ai_equip, list) and ai_equip:
+                                st.session_state.ai_detected_equipment = ai_equip
+                            
                             if analysis_result.get('success'):
                                 st.success(f"✅ {t('messages.success')}")
                                 st.rerun()
@@ -641,7 +646,11 @@ def predict_page():
 
             # الصف السابع - التجهيزات الإضافية
             with equip_container:
-                st.markdown(f"**{t('admin.equipment')}**")
+                ai_equip = st.session_state.get('ai_detected_equipment', [])
+                if ai_equip:
+                    st.markdown(f"**{t('admin.equipment')}** 🤖 _({len(ai_equip)} AI-detected)_")
+                else:
+                    st.markdown(f"**{t('admin.equipment')}**")
                 eq_cols = st.columns(7)
                 equipment_items = []
                 equip_keys = [
@@ -666,7 +675,9 @@ def predict_page():
                 ]
                 for idx, (key, label_key) in enumerate(equip_keys):
                     with eq_cols[idx % 5]:
-                        if st.checkbox(t(label_key), key=f"equip_{key}"):
+                        default_val = key in ai_equip
+                        label = f"🤖 {t(label_key)}" if default_val else t(label_key)
+                        if st.checkbox(label, value=default_val, key=f"equip_{key}"):
                             equipment_items.append(key)
 
         else:
@@ -761,7 +772,11 @@ def predict_page():
 
             # الصف السابع - التجهيزات (يدوي)
             with equip_container:
-                st.markdown(f"**{t('admin.equipment')}**")
+                ai_equip_man = st.session_state.get('ai_detected_equipment', [])
+                if ai_equip_man:
+                    st.markdown(f"**{t('admin.equipment')}** 🤖 _({len(ai_equip_man)} AI-detected)_")
+                else:
+                    st.markdown(f"**{t('admin.equipment')}**")
                 eq_cols = st.columns(7)
                 equipment_items = []
                 equip_keys = [
@@ -786,7 +801,9 @@ def predict_page():
                 ]
                 for idx, (key, label_key) in enumerate(equip_keys):
                     with eq_cols[idx % 5]:
-                        if st.checkbox(t(label_key), key=f"equip_{key}_man"):
+                        default_val = key in ai_equip_man
+                        label = f"🤖 {t(label_key)}" if default_val else t(label_key)
+                        if st.checkbox(label, value=default_val, key=f"equip_{key}_man"):
                             equipment_items.append(key)
 
         # معاينة السعر المباشرة
