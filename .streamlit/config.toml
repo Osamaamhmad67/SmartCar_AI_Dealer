@@ -63,6 +63,8 @@ primaryColor = "#D4AF37"
 # Allow access from any device on the network
 address = "localhost"
 port = 8501
+# Enable static file serving for PWA (manifest, service worker, icons)
+enableStaticServing = true
 # Disable XSRF for network access (required for mobile devices)
 enableCORS = false
 enableXsrfProtection = false

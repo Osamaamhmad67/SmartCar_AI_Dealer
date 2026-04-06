@@ -100,6 +100,7 @@ from components.notifications_bell import render_notification_bell
 from components.reviews_component import render_reviews
 from pages_app.tasks_page import tasks_page
 from pages_app.crm_page import crm_page
+from components.pwa_component import inject_pwa, render_install_button
 from pages_app.employee_dashboard_page import employee_dashboard_page
 
 sys.path.append(str(Path(__file__).parent))
@@ -231,6 +232,9 @@ def main():
     # ثم تطبيق CSS اللغة (RTL/LTR) لتتفوق على CSS الأساسي
     apply_language_css()
     
+    # تفعيل PWA (manifest + service worker + mobile meta)
+    inject_pwa()
+    
     # التمرير للأعلى عند التنقل
     if st.session_state.get('scroll_to_top', False):
         st.session_state['scroll_to_top'] = False
@@ -243,6 +247,7 @@ def main():
         render_sidebar()
         render_chatbot()
         render_notification_bell()
+        render_install_button()  # زر تثبيت PWA
         
         page_handlers = {
             'home': home_page,
